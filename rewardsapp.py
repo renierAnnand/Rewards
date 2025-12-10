@@ -208,7 +208,7 @@ if 'initialized' not in st.session_state:
     # Users database
     st.session_state.users = [
         {"id": 1, "name": "Ahmed Al-Saud", "email": "ahmed@alkhorayef.com", "department": "Engineering", "role": "user", "join_date": "2023-01-15"},
-        {"id": 2, "name": "Fatima Al-Rashid", "email": "fatima@alkhorayef.com", "department": "HR", "role": "admin", "join_date": "2022-06-10"},
+        {"id": 2, "name": "Mahmoud Hamidah", "email": "mahmoud.hamidah@alkhorayef.com", "department": "HR", "role": "admin", "join_date": "2022-06-10"},
         {"id": 3, "name": "Renier Annandale", "email": "renier@alkhorayef.com", "department": "IT", "title": "Digital Transformation Director", "role": "user", "join_date": "2023-06-20"},
         {"id": 4, "name": "Sara Al-Mutairi", "email": "sara@alkhorayef.com", "department": "Finance", "role": "user", "join_date": "2022-03-05"},
         {"id": 5, "name": "Mohammed Al-Qahtani", "email": "mohammed@alkhorayef.com", "department": "Operations", "role": "user", "join_date": "2021-11-12"}
@@ -2399,6 +2399,26 @@ def main():
             </div>
         """, unsafe_allow_html=True)
         
+        # User switcher (for demo purposes)
+        st.markdown("### 👤 Switch User")
+        user_options = {f"{u['name']} ({u['role'].upper()})": u['id'] for u in st.session_state.users}
+        
+        current_user_name = next(u['name'] for u in st.session_state.users if u["id"] == st.session_state.current_user_id)
+        current_display = f"{current_user_name} ({next(u['role'].upper() for u in st.session_state.users if u['id'] == st.session_state.current_user_id)})"
+        
+        selected_user = st.selectbox(
+            "Select User",
+            options=list(user_options.keys()),
+            index=list(user_options.keys()).index(current_display) if current_display in user_options.keys() else 0,
+            label_visibility="collapsed"
+        )
+        
+        if user_options[selected_user] != st.session_state.current_user_id:
+            st.session_state.current_user_id = user_options[selected_user]
+            st.rerun()
+        
+        st.markdown("---")
+        
         # Get current user
         current_user = next(u for u in st.session_state.users if u["id"] == st.session_state.current_user_id)
         
@@ -2408,10 +2428,13 @@ def main():
         
         st.markdown(f"""
             <div style="padding: 16px; background: rgba(30, 41, 59, 0.6); border-radius: 12px; margin-bottom: 20px;">
-                <div style="font-size: 14px; color: #94a3b8; margin-bottom: 4px;">Logged in as</div>
+                <div style="font-size: 14px; color: #94a3b8; margin-bottom: 4px;">Currently viewing as</div>
                 <div style="font-size: 16px; font-weight: 700; color: white;">{current_user['name']}</div>
                 {role_display}
                 <div style="font-size: 13px; color: #94a3b8;">{current_user['department']}</div>
+                <div style="font-size: 12px; color: #fbbf24; margin-top: 6px; font-weight: 600;">
+                    🔑 Role: {current_user['role'].upper()}
+                </div>
             </div>
         """, unsafe_allow_html=True)
         
@@ -2427,7 +2450,7 @@ def main():
         else:
             page = st.radio(
                 "Select Page",
-                ["👤 My Dashboard", "🏆 Leaderboards", "📊 Organization"],
+                ["👤 My Dashboard", "🏆 Leaderboards"],
                 label_visibility="collapsed"
             )
         
@@ -2498,272 +2521,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# ==============================================================================
-# FEATURE CHECKLIST - HR REQUIREMENTS IMPLEMENTATION
-# ==============================================================================
-"""
-╔═══════════════════════════════════════════════════════════════════════════╗
-║                      FEATURE IMPLEMENTATION CHECKLIST                      ║
-╚═══════════════════════════════════════════════════════════════════════════╝
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│ A) HR REQUIREMENTS                                                       │
-└─────────────────────────────────────────────────────────────────────────┘
-
-1. LOOKUP / CONFIG DEFINITIONS
-   ✅ Leaderboard Levels Definition
-      - Location: LEVELS constant (lines 55-62)
-      - UI: render_levels_management() in Settings tab
-      - 6 levels: Bronze, Silver, Gold, Platinum, Champion, Grand Master
-   
-   ✅ Badges Definition
-      - Location: BADGES constant (lines 65-74)
-      - UI: render_badges_management() in Settings tab
-      - 8 badge types with criteria and thresholds
-   
-   ✅ Earn Types (Goals) Definition
-      - Location: EARN_TYPES constant (lines 111-122)
-      - UI: render_earn_types_management() in Settings tab
-      - 10 earn types covering all activity categories
-   
-   ✅ Redemption Options
-      - Location: REDEMPTION_OPTIONS constant (lines 125-136)
-      - UI: render_redemptions_management() in Settings tab
-      - 10 redemption options with points, values, categories
-
-2. USER PROCESSES
-   ✅ Submit Rewards Points Request
-      - Function: render_submit_reward_request() (lines ~XXX)
-      - Features: Dynamic points calculation, justification required, 
-                 duplicate detection, attachment description
-      - Tab: Employee Dashboard → "Submit Request"
-   
-   ✅ View Rewards Points History
-      - Function: render_employee_history() (lines ~XXX)
-      - Shows: Approved points, pending requests, dates, categories
-      - Tab: Employee Dashboard → "My History"
-   
-   ✅ Submit Redemption Request
-      - Function: render_redemption_section() (lines ~XXX)
-      - Features: Catalog view, affordability check, request submission
-      - Tab: Employee Dashboard → "Redeem Points"
-   
-   ✅ View Redemption History
-      - Function: render_employee_history() (lines ~XXX)
-      - Shows: All redemptions with status and fulfillment
-      - Tab: Employee Dashboard → "My History"
-
-3. ADMIN PROCESSES
-   ✅ View All Employees' Points
-      - Function: render_admin_all_employees() (lines ~XXX)
-      - Features: Sortable table, category breakdown, export to CSV
-      - Tab: Admin Dashboard → "All Employees"
-   
-   ✅ Add Points for Employees (Manual)
-      - Function: render_admin_add_points() (lines ~XXX)
-      - Features: Select employee, specify points, category, reason
-      - Tab: Admin Dashboard → "Add Points"
-   
-   ✅ Review & Approve/Reject Reward Requests
-      - Function: render_admin_pending_requests() (lines ~XXX)
-      - Features: Approve/reject buttons, auto-level checks, badge awards
-      - Tab: Admin Dashboard → "Pending Requests"
-   
-   ✅ Review & Approve/Reject Redemption Requests
-      - Function: render_admin_pending_requests() (lines ~XXX)
-      - Features: Points validation, approve/reject actions
-      - Tab: Admin Dashboard → "Pending Requests"
-
-4. REPORTS & DASHBOARDS
-   ✅ Leaderboard (Legend Board) for All Users
-      - Function: generate_leaderboard() + display in render_organization_dashboard()
-      - Features: Ranked by points, shows level, department
-      - Tab: Organization Dashboard
-   
-   ✅ Points Details for Admin
-      - Function: render_admin_all_employees() (lines ~XXX)
-      - Features: Category breakdown, total points, export
-      - Tab: Admin Dashboard → "All Employees"
-   
-   ✅ Employee Profile View
-      - Function: render_employee_dashboard() (lines ~XXX)
-      - Features: Level display, points progress, badges, activities
-      - Tab: Employee Dashboard → "Overview"
-   
-   ✅ Org/HR Dashboard
-      - Function: render_organization_dashboard() (lines ~XXX)
-      - Features: Key metrics, department charts, level distribution, 
-                 recent activity timeline
-      - Tab: Organization Dashboard
-
-5. NOTIFICATIONS
-   ✅ User Notifications - New Points Earned
-      - Function: add_notification() called after request approval
-      - Display: Sidebar notifications panel
-   
-   ✅ User Notifications - New Level Reached
-      - Function: check_and_award_badges() checks level changes
-      - Display: Sidebar notifications panel
-   
-   ✅ Admin Notifications - New Reward Request
-      - Function: add_notification() called on request submission
-      - Display: Sidebar notifications panel (admin view)
-   
-   ✅ Admin Notifications - New Redemption Request
-      - Function: add_notification() called on redemption submission
-      - Display: Sidebar notifications panel (admin view)
-
-6. ENGAGEMENT SOURCES (SCORING CATEGORIES)
-   ✅ Surveys
-      - Implementation: SCORING_RULES + calculate_points_for_survey()
-      - Types: Short (50pts), Medium (80pts), Long (100pts)
-      - Per question: 10pts
-   
-   ✅ Training Courses
-      - Implementation: SCORING_RULES + calculate_points_for_training()
-      - Full day (8h): 200pts
-      - Half day (4h): 100pts
-      - Mandatory: 30pts/hour, Elective: 20pts/hour
-   
-   ✅ Initiatives & Ideas
-      - Implementation: SCORING_RULES + calculate_points_for_initiative()
-      - Qudwa: 500pts
-      - Digital Champion (accepted idea): 1000pts
-      - Alkhorayef Champion: 1000pts
-      - Thank you card: 50pts
-      - Idea submission: 60pts
-   
-   ✅ Events & Participation
-      - Implementation: SCORING_RULES + calculate_points_for_event()
-      - Corporate event: 80pts
-      - CSR activity: 100pts
-      - Wellness session: 45pts
-   
-   ✅ Performance & KPIs
-      - Implementation: SCORING_RULES
-      - KPI target achieved: 200pts
-      - Exceed target: 300pts
-      - Extra milestone: 150pts
-   
-   ✅ Attendance
-      - Implementation: SCORING_RULES
-      - Perfect month: 300pts
-      - Perfect quarter: 1000pts
-   
-   ✅ Certifications & Learning
-      - Implementation: SCORING_RULES + calculate_points_for_certification()
-      - Basic cert: 250pts
-      - Advanced cert: 500pts
-      - Professional cert: 750pts
-      - Compliance module: 30pts
-      - Safety training: 25pts/hour
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│ B) IMPROVEMENTS                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-
-1. CENTRAL SCORING ENGINE
-   ✅ Single Source of Truth
-      - Location: SCORING_RULES dict (lines 77-108)
-      - All point values defined in one place
-   
-   ✅ Helper Functions
-      - calculate_points_for_survey() (lines ~XXX)
-      - calculate_points_for_training() (lines ~XXX)
-      - calculate_points_for_certification() (lines ~XXX)
-      - calculate_points_for_initiative() (lines ~XXX)
-      - calculate_points_for_event() (lines ~XXX)
-
-2. FAIRNESS & ANTI-ABUSE
-   ✅ Duplicate Prevention
-      - Function: check_duplicate_claim() (lines ~XXX)
-      - Checks: Same user, category, description, date
-      - Blocks duplicate submissions
-   
-   ✅ Required Justification
-      - Implementation: render_submit_reward_request()
-      - Fields: Description (required), Justification (required), 
-               Attachment description (optional)
-   
-   ✅ Audit Log
-      - Data: st.session_state.audit_log
-      - Function: add_audit_log() (lines ~XXX)
-      - Display: render_admin_audit_log() in Admin Dashboard
-      - Features: Filterable, exportable, complete history
-
-3. DASHBOARDS & ANALYTICS
-   ✅ Employee Dashboard
-      - Level display with progress bar
-      - Category breakdown (Training, Innovation, Events, Performance)
-      - Pie chart of points distribution
-      - Bar chart of recent activities
-      - Activity timeline in history tab
-      - Earned badges display
-   
-   ✅ Organization Dashboard
-      - Key metrics: Total employees, points distributed, redemptions, avg/user
-      - Department points bar chart
-      - Level distribution pie chart
-      - Company leaderboard
-      - Recent activity timeline
-   
-   ✅ Admin Dashboard
-      - Pending requests (reward + redemption)
-      - Quick approve/reject actions
-      - All employees view with category breakdown
-      - Manual points addition
-      - Audit log with filters and export
-
-4. LOGICAL MODULARITY
-   ✅ Section Organization
-      1. Config & Constants (lines 55-136)
-      2. Data Structures (lines 140-240)
-      3. Helper Functions - Scoring (lines 244-340)
-      4. Helper Functions - System (lines 344-400)
-      5. UI Functions - Employee (lines 404-XXX)
-      6. UI Functions - Organization (lines XXX-XXX)
-      7. UI Functions - Admin (lines XXX-XXX)
-      8. UI Functions - Settings (lines XXX-XXX)
-      9. Main Application (lines XXX-XXX)
-   
-   ✅ Clean Structure
-      - All in single file
-      - Logical grouping with section headers
-      - Modular functions
-      - Clear naming conventions
-      - Comprehensive comments
-
-┌─────────────────────────────────────────────────────────────────────────┐
-│ SUMMARY                                                                  │
-└─────────────────────────────────────────────────────────────────────────┘
-
-TOTAL FEATURES IMPLEMENTED: 50+
-
-HR Requirements Coverage: 100%
-- All 6 main categories fully implemented
-- All 30+ sub-features working
-- Complete workflow from request to redemption
-
-Improvements Implemented: 100%
-- Central scoring engine with 40+ rules
-- Fairness mechanisms with duplicate detection
-- 3 comprehensive dashboards with analytics
-- Modular structure in single file (1000+ lines)
-
-Additional Features:
-- Real-time notifications
-- Badge system with auto-awards
-- Level progression with animations
-- Leaderboard with rankings
-- Export capabilities (CSV)
-- Responsive UI with modern design
-- Demo data for testing
-
-Ready for Production: ✅
-- All core functionality working
-- Admin controls in place
-- Audit trail complete
-- User-friendly interface
-- Scalable architecture
-"""
