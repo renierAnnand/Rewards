@@ -1351,7 +1351,7 @@ def render_admin_dashboard():
         </div>
     """, unsafe_allow_html=True)
     
-    tabs = st.tabs(["🔔 Pending Requests", "👥 All Employees", "➕ Add Points", "📋 Audit Log"])
+    tabs = st.tabs(["🔔 Pending Requests", "👥 All Employees", "➕ Add Points", "⚙️ Manage Items", "📋 Audit Log"])
     
     with tabs[0]:  # Pending Requests
         render_admin_pending_requests()
@@ -1362,8 +1362,276 @@ def render_admin_dashboard():
     with tabs[2]:  # Add Points
         render_admin_add_points()
     
-    with tabs[3]:  # Audit Log
+    with tabs[3]:  # Manage Items
+        render_admin_manage_items()
+    
+    with tabs[4]:  # Audit Log
         render_admin_audit_log()
+
+def render_admin_manage_items():
+    """Comprehensive admin interface to manage all system items"""
+    st.markdown("### ⚙️ Manage System Items")
+    st.info("🎯 **Central hub to manage ALL items in the rewards system** - activities, scoring, redemptions, levels, and badges")
+    
+    # Initialize custom items if needed
+    if 'custom_earn_types' not in st.session_state:
+        st.session_state.custom_earn_types = []
+    if 'custom_scoring_rules' not in st.session_state:
+        st.session_state.custom_scoring_rules = {}
+    
+    # Sub-tabs for different item types
+    item_tabs = st.tabs(["📋 Activities", "💰 Scoring Rules", "🎁 Redemptions", "⭐ Levels", "🏆 Badges"])
+    
+    with item_tabs[0]:  # Activities Management
+        st.markdown("#### 📋 All Submittable Activities")
+        st.markdown("**These are ALL the activities employees can submit for points.**")
+        
+        # Statistics
+        all_activities = EARN_TYPES + st.session_state.custom_earn_types
+        active_count = len([a for a in all_activities if a.get('is_active', True)])
+        custom_count = len(st.session_state.custom_earn_types)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Activities", len(all_activities))
+        with col2:
+            st.metric("System Activities", len(EARN_TYPES))
+        with col3:
+            st.metric("Custom Activities", custom_count)
+        with col4:
+            st.metric("Active", active_count)
+        
+        st.markdown("---")
+        
+        # Group by category
+        categories = {}
+        for activity in all_activities:
+            cat = activity['category']
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(activity)
+        
+        # Display grouped activities
+        for cat_name in sorted(categories.keys()):
+            activities = categories[cat_name]
+            with st.expander(f"📂 **{cat_name.upper()}** ({len(activities)} activities)", expanded=False):
+                for activity in activities:
+                    is_custom = activity.get('id', 0) > 10
+                    is_active = activity.get('is_active', True)
+                    
+                    col1, col2, col3 = st.columns([3, 1, 1])
+                    
+                    with col1:
+                        status_icon = "✅" if is_active else "⏸️"
+                        type_badge = "🔧 Custom" if is_custom else "📌 System"
+                        
+                        st.markdown(f"""
+                            <div style="padding: 12px; background: rgba(30,41,59,0.3); border-radius: 8px; 
+                                        border-left: 4px solid {'#4ade80' if is_active else '#94a3b8'};">
+                                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 6px;">
+                                    {status_icon} {activity['name']} {type_badge}
+                                </div>
+                                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px;">
+                                    {activity['description']}
+                                </div>
+                                <div style="font-size: 12px; color: #60a5fa;">
+                                    💰 Points: {activity['points']} | 📂 Category: {activity['category']}
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        if is_custom:
+                            if st.button("✏️ Edit", key=f"edit_act_{activity['id']}", use_container_width=True):
+                                st.info("Edit functionality coming soon")
+                    
+                    with col3:
+                        if is_custom:
+                            if st.button("🗑️ Delete", key=f"del_act_{activity['id']}", use_container_width=True):
+                                activity_index = st.session_state.custom_earn_types.index(activity)
+                                st.session_state.custom_earn_types.pop(activity_index)
+                                add_audit_log(
+                                    st.session_state.current_user_id,
+                                    "deleted_activity",
+                                    f"Deleted activity: {activity['name']}"
+                                )
+                                st.success(f"✅ Deleted {activity['name']}")
+                                st.rerun()
+        
+        # Add new activity button
+        st.markdown("---")
+        if st.button("➕ Add New Activity", type="primary", use_container_width=True):
+            st.info("💡 Go to Organization → Activity Management to add new activities")
+    
+    with item_tabs[1]:  # Scoring Rules
+        st.markdown("#### 💰 All Scoring Rules")
+        st.markdown("**Manage point values for all activity types**")
+        
+        # Group scoring rules by category
+        scoring_categories = {
+            "📊 Surveys": ["survey_per_question", "survey_short", "survey_medium", "survey_long"],
+            "📚 Training": ["training_per_hour", "training_full_day", "training_half_day", "training_mandatory", "training_elective"],
+            "🎓 Certifications": ["certification_basic", "certification_advanced", "certification_professional"],
+            "💡 Initiatives": ["initiative_qudwa", "initiative_digital_champion", "initiative_alkhorayef_champion", 
+                              "initiative_thank_you_card", "initiative_idea_submission", "initiative_idea_accepted"],
+            "🎪 Events": ["event_corporate", "event_csr", "event_wellness"],
+            "🎯 Performance": ["kpi_target_achieved", "kpi_exceed_target", "extra_milestone"],
+            "⭐ Attendance": ["perfect_attendance_month", "perfect_attendance_quarter"]
+        }
+        
+        st.info("💡 Changes apply to all future point calculations. Existing awarded points are not affected.")
+        
+        for cat_name, rules in scoring_categories.items():
+            with st.expander(f"{cat_name} ({len(rules)} rules)", expanded=False):
+                for rule in rules:
+                    if rule in SCORING_RULES:
+                        col1, col2, col3 = st.columns([2, 1, 1])
+                        
+                        with col1:
+                            st.write(f"**{rule.replace('_', ' ').title()}**")
+                        
+                        with col2:
+                            current_value = st.session_state.custom_scoring_rules.get(rule, SCORING_RULES[rule])
+                            new_value = st.number_input(
+                                "Points",
+                                min_value=1,
+                                max_value=10000,
+                                value=int(current_value),
+                                key=f"admin_score_{rule}",
+                                label_visibility="collapsed"
+                            )
+                        
+                        with col3:
+                            if st.button("💾 Update", key=f"admin_upd_{rule}", use_container_width=True):
+                                st.session_state.custom_scoring_rules[rule] = new_value
+                                add_audit_log(
+                                    st.session_state.current_user_id,
+                                    "updated_scoring",
+                                    f"Updated {rule}: {SCORING_RULES[rule]} → {new_value} pts"
+                                )
+                                st.success(f"✅ Updated to {new_value} points")
+                                st.rerun()
+    
+    with item_tabs[2]:  # Redemptions
+        st.markdown("#### 🎁 Redemption Options")
+        st.markdown("**All rewards employees can redeem their points for**")
+        
+        # Display redemption options
+        redemption_categories = {}
+        for redemption in REDEMPTION_OPTIONS:
+            cat = redemption.get('category', 'Other')
+            if cat not in redemption_categories:
+                redemption_categories[cat] = []
+            redemption_categories[cat].append(redemption)
+        
+        for cat_name in sorted(redemption_categories.keys()):
+            items = redemption_categories[cat_name]
+            with st.expander(f"🎁 **{cat_name}** ({len(items)} items)", expanded=False):
+                for item in items:
+                    col1, col2, col3 = st.columns([3, 1, 1])
+                    
+                    with col1:
+                        st.markdown(f"""
+                            <div style="padding: 12px; background: rgba(30,41,59,0.3); border-radius: 8px;">
+                                <div style="font-size: 16px; font-weight: 700; color: white; margin-bottom: 6px;">
+                                    {item['icon']} {item['name']}
+                                </div>
+                                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px;">
+                                    {item['description']}
+                                </div>
+                                <div style="font-size: 12px; color: #fbbf24;">
+                                    💰 {item['points']:,} points | 💵 Value: {item['value']}
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        if st.button("✏️ Edit", key=f"edit_red_{item['id']}", use_container_width=True):
+                            st.info("Edit functionality coming soon")
+                    
+                    with col3:
+                        pass  # System redemptions can't be deleted
+        
+        st.markdown("---")
+        st.info("💡 To add custom redemption options, contact system administrator")
+    
+    with item_tabs[3]:  # Levels
+        st.markdown("#### ⭐ Level Definitions")
+        st.markdown("**All achievement levels in the system**")
+        
+        for level in LEVELS:
+            col1, col2, col3, col4 = st.columns([1, 2, 2, 2])
+            
+            with col1:
+                st.markdown(f"<div style='text-align: center; font-size: 48px;'>{level['icon']}</div>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                    <div style="padding: 12px;">
+                        <div style="font-size: 18px; font-weight: 700; color: white;">{level['name']}</div>
+                        <div style="font-size: 13px; color: #94a3b8;">Level {level['id']}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                    <div style="padding: 12px;">
+                        <div style="font-size: 14px; color: #60a5fa;">Min Points</div>
+                        <div style="font-size: 16px; font-weight: 700; color: white;">{level['min_points']:,}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                max_pts = level['max_points'] if level['max_points'] != float('inf') else "∞"
+                st.markdown(f"""
+                    <div style="padding: 12px;">
+                        <div style="font-size: 14px; color: #60a5fa;">Max Points</div>
+                        <div style="font-size: 16px; font-weight: 700; color: white;">{max_pts}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("---")
+        
+        st.info("💡 Level thresholds are configured in the system. Contact administrator to modify.")
+    
+    with item_tabs[4]:  # Badges
+        st.markdown("#### 🏆 Badge Definitions")
+        st.markdown("**All achievement badges employees can earn**")
+        
+        for badge in BADGES:
+            col1, col2, col3, col4 = st.columns([1, 2, 2, 2])
+            
+            with col1:
+                st.markdown(f"<div style='text-align: center; font-size: 48px;'>{badge['icon']}</div>", unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                    <div style="padding: 12px;">
+                        <div style="font-size: 18px; font-weight: 700; color: white;">{badge['name']}</div>
+                        <div style="font-size: 13px; color: #94a3b8;">{badge['category']}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                    <div style="padding: 12px;">
+                        <div style="font-size: 14px; color: #94a3b8;">Criteria</div>
+                        <div style="font-size: 13px; color: white;">{badge['criteria']}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                threshold = badge.get('points_threshold', badge.get('count_threshold', 'N/A'))
+                st.markdown(f"""
+                    <div style="padding: 12px;">
+                        <div style="font-size: 14px; color: #fbbf24;">Threshold</div>
+                        <div style="font-size: 16px; font-weight: 700; color: white;">{threshold}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("---")
+        
+        st.info("💡 Badge criteria are configured in the system. Contact administrator to add new badges.")
 
 def render_admin_pending_requests():
     """Render pending reward and redemption requests with approve/reject actions"""
