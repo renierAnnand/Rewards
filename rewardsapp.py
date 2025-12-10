@@ -1076,28 +1076,74 @@ def render_activity_management():
     mgmt_tabs = st.tabs(["📋 Current Activities", "➕ Add New Activity", "💰 Scoring Rules"])
     
     with mgmt_tabs[0]:  # Current Activities
-        st.markdown("#### 📋 Current Activity Types")
+        st.markdown("#### 📋 All Submittable Activities")
+        st.info("💡 **These are ALL the activities employees can submit for points.** Manage what's available, update descriptions, or remove custom activities.")
         
-        # Display all earn types
+        # Display statistics
         all_earn_types = EARN_TYPES + st.session_state.custom_earn_types
+        active_activities = [et for et in all_earn_types if et.get('is_active', True)]
+        custom_count = len(st.session_state.custom_earn_types)
         
-        if all_earn_types:
-            for i, earn_type in enumerate(all_earn_types):
-                with st.expander(f"{earn_type['name']} - {earn_type['category']}", expanded=False):
-                    col1, col2 = st.columns([3, 1])
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Activities", len(all_earn_types))
+        with col2:
+            st.metric("Active", len(active_activities))
+        with col3:
+            st.metric("Custom Added", custom_count)
+        
+        st.markdown("---")
+        
+        # Group by category
+        categories = {}
+        for earn_type in all_earn_types:
+            cat = earn_type['category']
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(earn_type)
+        
+        # Display by category
+        for category_name, activities in sorted(categories.items()):
+            with st.expander(f"📂 {category_name.upper()} ({len(activities)} activities)", expanded=False):
+                for earn_type in activities:
+                    is_custom = earn_type.get('id', 0) > 10
+                    is_active = earn_type.get('is_active', True)
                     
-                    with col1:
-                        st.write(f"**Category:** {earn_type['category']}")
-                        st.write(f"**Points:** {earn_type['points']}")
-                        st.write(f"**Description:** {earn_type['description']}")
+                    # Activity card
+                    status_badge = "✅ Active" if is_active else "⏸️ Inactive"
+                    custom_badge = " 🔧 Custom" if is_custom else " 📌 System"
                     
-                    with col2:
-                        if i >= len(EARN_TYPES):  # Custom activity
-                            if st.button("🗑️ Delete", key=f"del_earn_{i}", use_container_width=True):
-                                st.session_state.custom_earn_types.pop(i - len(EARN_TYPES))
-                                st.success("Activity deleted!")
-                                st.rerun()
-        else:
+                    st.markdown(f"""
+                        <div style="background: rgba(30, 41, 59, 0.3); padding: 16px; border-radius: 12px; 
+                                    margin-bottom: 12px; border-left: 4px solid {'#4ade80' if is_active else '#64748b'};">
+                            <div style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 8px;">
+                                {earn_type['name']} {custom_badge}
+                            </div>
+                            <div style="font-size: 14px; color: #94a3b8; margin-bottom: 8px;">
+                                {earn_type['description']}
+                            </div>
+                            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                                <span style="font-size: 13px; color: #a78bfa;">💰 Points: {earn_type['points']}</span>
+                                <span style="font-size: 13px; color: #60a5fa;">📂 Category: {earn_type['category']}</span>
+                                <span style="font-size: 13px; color: {'#4ade80' if is_active else '#64748b'};">{status_badge}</span>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Delete button for custom activities
+                    if is_custom:
+                        activity_index = st.session_state.custom_earn_types.index(earn_type)
+                        if st.button(f"🗑️ Delete {earn_type['name']}", key=f"del_{earn_type['id']}", use_container_width=True):
+                            st.session_state.custom_earn_types.pop(activity_index)
+                            add_audit_log(
+                                st.session_state.current_user_id,
+                                "deleted_activity_type",
+                                f"Deleted activity: {earn_type['name']}"
+                            )
+                            st.success(f"✅ Deleted {earn_type['name']}")
+                            st.rerun()
+        
+        if not all_earn_types:
             st.info("No activities configured yet")
     
     with mgmt_tabs[1]:  # Add New Activity
@@ -1783,6 +1829,294 @@ def render_scoring_rules():
 # SECTION 8: MAIN APPLICATION
 # ==============================================================================
 
+# ==============================================================================
+# SECTION 8: UI RENDERING FUNCTIONS - LEADERBOARDS PAGE
+# ==============================================================================
+
+def render_leaderboards_page():
+    """Render comprehensive leaderboards page with time filters"""
+    load_css()
+    
+    st.markdown("""
+        <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                    border-radius: 24px; padding: 40px; margin-bottom: 40px;">
+            <h1 style='font-size: 48px; font-weight: 800; margin-bottom: 12px; color: white;'>
+                🏆 Leaderboards
+            </h1>
+            <p style='font-size: 20px; opacity: 0.95; color: white;'>
+                Company rankings across different time periods - compete and climb to the top!
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Time period selector
+    col1, col2, col3 = st.columns([2, 2, 1])
+    
+    with col1:
+        time_period = st.selectbox(
+            "📅 Time Period",
+            ["Today", "This Month", "Last 3 Months", "This Year", "All Time"],
+            index=4  # Default to All Time
+        )
+    
+    with col2:
+        department_filter = st.selectbox(
+            "🏢 Department",
+            ["All Departments"] + list(set([u["department"] for u in st.session_state.users if u["role"] == "user"]))
+        )
+    
+    with col3:
+        st.markdown("<br>", unsafe_allow_html=True)
+        show_stats = st.checkbox("Show Stats", value=True)
+    
+    # Calculate date range based on time period
+    from datetime import datetime, timedelta
+    today = datetime.now()
+    
+    if time_period == "Today":
+        start_date = today.strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
+        period_label = "Today"
+    elif time_period == "This Month":
+        start_date = today.replace(day=1).strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
+        period_label = f"{today.strftime('%B %Y')}"
+    elif time_period == "Last 3 Months":
+        start_date = (today - timedelta(days=90)).strftime("%Y-%m-%d")
+        end_date = today.strftime("%Y-%m-%d")
+        period_label = "Last 3 Months"
+    elif time_period == "This Year":
+        start_date = f"{today.year}-01-01"
+        end_date = today.strftime("%Y-%m-%d")
+        period_label = f"Year {today.year}"
+    else:  # All Time
+        start_date = "2000-01-01"
+        end_date = "2099-12-31"
+        period_label = "All Time"
+    
+    # Generate leaderboard with filters
+    leaderboard_data = []
+    
+    for user in st.session_state.users:
+        if user["role"] == "user":
+            # Apply department filter
+            if department_filter != "All Departments" and user["department"] != department_filter:
+                continue
+            
+            # Calculate points for time period
+            period_points = 0
+            for point in st.session_state.points_ledger:
+                if (point["user_id"] == user["id"] and 
+                    point["status"] == "approved" and 
+                    start_date <= point["date"] <= end_date):
+                    period_points += point["points"]
+            
+            # Get total points (all time)
+            total_points = get_user_total_points(user["id"])
+            level = get_user_level(total_points)
+            
+            # Get category breakdown for period
+            category_points = {}
+            for point in st.session_state.points_ledger:
+                if (point["user_id"] == user["id"] and 
+                    point["status"] == "approved" and 
+                    start_date <= point["date"] <= end_date):
+                    cat = point["category"]
+                    category_points[cat] = category_points.get(cat, 0) + point["points"]
+            
+            leaderboard_data.append({
+                "user_id": user["id"],
+                "name": user["name"],
+                "department": user["department"],
+                "title": user.get("title", ""),
+                "period_points": period_points,
+                "total_points": total_points,
+                "level": level,
+                "category_breakdown": category_points
+            })
+    
+    # Sort by period points
+    leaderboard_data.sort(key=lambda x: x["period_points"], reverse=True)
+    
+    # Assign ranks
+    for i, entry in enumerate(leaderboard_data, 1):
+        entry["rank"] = i
+    
+    # Display top 3 podium
+    if len(leaderboard_data) >= 3 and leaderboard_data[0]["period_points"] > 0:
+        st.markdown(f"### 🏆 Top 3 Champions - {period_label}")
+        
+        cols = st.columns([1, 2, 1])
+        
+        # 2nd Place
+        with cols[0]:
+            second = leaderboard_data[1]
+            st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%);
+                            border-radius: 20px; padding: 30px; text-align: center;
+                            margin-top: 40px; border: 3px solid #e0e0e0;
+                            box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+                    <div style="font-size: 60px; margin-bottom: 12px;">🥈</div>
+                    <div style="font-size: 20px; font-weight: 800; color: white; margin-bottom: 8px;">
+                        {second['name']}
+                    </div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 12px;">
+                        {second['title'] if second['title'] else second['department']}
+                    </div>
+                    <div style="font-size: 32px; font-weight: 800; color: white;">
+                        {second['period_points']:,}
+                    </div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9);">points</div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # 1st Place
+        with cols[1]:
+            first = leaderboard_data[0]
+            st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                            border-radius: 24px; padding: 40px; text-align: center;
+                            border: 4px solid #ffed4e; margin-top: 0px;
+                            box-shadow: 0 12px 32px rgba(255, 215, 0, 0.4);
+                            animation: pulse 2s infinite;">
+                    <div style="font-size: 80px; margin-bottom: 16px;">👑</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">
+                        {first['name']}
+                    </div>
+                    <div style="font-size: 16px; color: #64748b; margin-bottom: 16px;">
+                        {first['title'] if first['title'] else first['department']}
+                    </div>
+                    <div style="font-size: 48px; font-weight: 800; color: #1e293b;">
+                        {first['period_points']:,}
+                    </div>
+                    <div style="font-size: 16px; color: #64748b; margin-bottom: 16px;">points</div>
+                    <div style="font-size: 14px; padding: 8px 16px; background: rgba(30, 41, 59, 0.1);
+                                border-radius: 8px; display: inline-block;">
+                        {first['level']['icon']} {first['level']['name']} Level
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        # 3rd Place
+        with cols[2]:
+            third = leaderboard_data[2]
+            st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
+                            border-radius: 20px; padding: 30px; text-align: center;
+                            margin-top: 40px; border: 3px solid #d4a574;
+                            box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+                    <div style="font-size: 60px; margin-bottom: 12px;">🥉</div>
+                    <div style="font-size: 20px; font-weight: 800; color: white; margin-bottom: 8px;">
+                        {third['name']}
+                    </div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 12px;">
+                        {third['title'] if third['title'] else third['department']}
+                    </div>
+                    <div style="font-size: 32px; font-weight: 800; color: white;">
+                        {third['period_points']:,}
+                    </div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9);">points</div>
+                </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Full leaderboard table
+    st.markdown(f"### 📊 Complete Rankings - {period_label}")
+    
+    if department_filter != "All Departments":
+        st.info(f"Showing results for: **{department_filter}** department")
+    
+    if leaderboard_data:
+        # Prepare dataframe
+        leaderboard_display = []
+        for entry in leaderboard_data:
+            display_entry = {
+                "🏅 Rank": entry["rank"],
+                "👤 Name": entry["name"],
+                "🏢 Department": entry["department"],
+                f"💰 Points ({period_label})": f"{entry['period_points']:,}",
+                "📊 Total Points": f"{entry['total_points']:,}",
+                "⭐ Level": f"{entry['level']['icon']} {entry['level']['name']}"
+            }
+            
+            if show_stats and entry["category_breakdown"]:
+                # Add top category
+                top_cat = max(entry["category_breakdown"].items(), key=lambda x: x[1])
+                display_entry["🎯 Top Category"] = f"{top_cat[0].title()} ({top_cat[1]} pts)"
+            
+            leaderboard_display.append(display_entry)
+        
+        df_leaderboard = pd.DataFrame(leaderboard_display)
+        
+        # Highlight current user
+        current_user = next(u for u in st.session_state.users if u["id"] == st.session_state.current_user_id)
+        
+        st.dataframe(
+            df_leaderboard,
+            use_container_width=True,
+            hide_index=True,
+            height=600
+        )
+        
+        # Show current user's position
+        user_entry = next((e for e in leaderboard_data if e["user_id"] == st.session_state.current_user_id), None)
+        
+        if user_entry and user_entry["period_points"] > 0:
+            st.markdown("---")
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("Your Rank", f"#{user_entry['rank']}", help="Your position in this leaderboard")
+            
+            with col2:
+                st.metric(f"Your Points ({period_label})", f"{user_entry['period_points']:,}", help="Points earned in this period")
+            
+            with col3:
+                if user_entry["rank"] > 1:
+                    gap = leaderboard_data[user_entry["rank"]-2]["period_points"] - user_entry["period_points"]
+                    st.metric("Points to Next Rank", f"{gap:,}", help="Points needed to move up one position")
+                else:
+                    st.metric("Status", "🏆 #1", help="You're at the top!")
+            
+            with col4:
+                if user_entry["rank"] <= 10:
+                    st.metric("Status", "🌟 Top 10!", help="You're in the top 10")
+                elif user_entry["rank"] <= 25:
+                    st.metric("Status", "⭐ Top 25", help="You're in the top 25")
+                else:
+                    st.metric("Status", "Keep Going!", help="Keep earning points to climb")
+    else:
+        st.info("No data available for the selected time period and filters")
+    
+    # Statistics section
+    if show_stats and leaderboard_data:
+        st.markdown("---")
+        st.markdown(f"### 📈 Period Statistics - {period_label}")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        total_points_period = sum(e["period_points"] for e in leaderboard_data)
+        avg_points = total_points_period / len(leaderboard_data) if leaderboard_data else 0
+        max_points = max([e["period_points"] for e in leaderboard_data], default=0)
+        active_users = len([e for e in leaderboard_data if e["period_points"] > 0])
+        
+        with col1:
+            st.metric("Total Points Awarded", f"{total_points_period:,}")
+        
+        with col2:
+            st.metric("Average Points", f"{avg_points:,.0f}")
+        
+        with col3:
+            st.metric("Highest Score", f"{max_points:,}")
+        
+        with col4:
+            st.metric("Active Employees", f"{active_users}/{len(leaderboard_data)}")
+
+# ==============================================================================
+# SECTION 9: MAIN APPLICATION
+# ==============================================================================
+
 def main():
     """Main application logic with navigation"""
     load_css()
@@ -1819,13 +2153,13 @@ def main():
         if current_user["role"] == "admin":
             page = st.radio(
                 "Select Page",
-                ["👤 Employee View", "📊 Organization", "🔧 Admin", "⚙️ Settings"],
+                ["👤 Employee View", "🏆 Leaderboards", "📊 Organization", "🔧 Admin", "⚙️ Settings"],
                 label_visibility="collapsed"
             )
         else:
             page = st.radio(
                 "Select Page",
-                ["👤 My Dashboard", "📊 Organization"],
+                ["👤 My Dashboard", "🏆 Leaderboards", "📊 Organization"],
                 label_visibility="collapsed"
             )
         
@@ -1874,6 +2208,8 @@ def main():
     if current_user["role"] == "admin":
         if page == "👤 Employee View":
             render_employee_dashboard()
+        elif page == "🏆 Leaderboards":
+            render_leaderboards_page()
         elif page == "📊 Organization":
             render_organization_dashboard()
         elif page == "🔧 Admin":
@@ -1883,6 +2219,8 @@ def main():
     else:
         if page == "👤 My Dashboard":
             render_employee_dashboard()
+        elif page == "🏆 Leaderboards":
+            render_leaderboards_page()
         elif page == "📊 Organization":
             render_organization_dashboard()
 
