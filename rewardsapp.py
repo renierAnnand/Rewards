@@ -297,7 +297,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Fake Employee Data
+# Fake Employee Data with Structured Activities
 employee_data = {
     "name": "Andrei Spitzer",
     "role": "Digital Designer",
@@ -309,24 +309,36 @@ employee_data = {
     "coins": 72,
     "league": "Sapphire",
     "aura": "Master",
-    "trainings": {
-        "mandatory": 14,
-        "elective": 8,
-        "safety": 3,
-        "compliance": 6
+    
+    # Organized by Category
+    "training_learning": {
+        "mandatory_training": 14,
+        "elective_training": 8,
+        "certifications": 2,  # Count of certifications
+        "safety_training": 3,
+        "compliance_modules": 6
     },
-    "certifications": ["Azure Fundamentals", "Lean Six Sigma Yellow Belt"],
-    "activities": {
+    
+    "hr_engagement": {
         "engagement_surveys": 3,
-        "hr_sessions": 4,
-        "perfect_attendance": 2,
-        "innovation_ideas": 5,
+        "hr_sessions_townhalls": 4,
+        "perfect_attendance": 2  # months
+    },
+    
+    "innovation": {
+        "innovation_ideas_submitted": 5,
         "ideas_accepted": 2,
-        "digital_surveys": 6,
+        "digital_surveys": 6
+    },
+    
+    "events_participation": {
         "corporate_events": 4,
         "csr_activities": 2,
         "wellness_sessions": 3
-    }
+    },
+    
+    # Certification details
+    "certifications_list": ["Azure Fundamentals", "Lean Six Sigma Yellow Belt"]
 }
 
 # KPI Data
@@ -592,7 +604,7 @@ with tab1:
         ))
         
         fig_performance.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0, 0, 0, 0)',
             plot_bgcolor='rgba(15, 23, 42, 0.5)',
             font={'color': "white", 'family': "Outfit", 'size': 12},
             height=380,
@@ -678,7 +690,7 @@ with tab1:
                     linecolor='rgba(148, 163, 184, 0.3)'
                 )
             ),
-            paper_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0, 0, 0, 0)',
             font={'color': "white", 'family': "Outfit"},
             height=450,
             margin=dict(l=80, r=80, t=40, b=40),
@@ -741,41 +753,185 @@ with tab1:
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Reward Activities Summary
+        # Training & Learning Activities
         st.markdown("""
             <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
                         border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
-                        margin-bottom: 30px;">
-                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
-                    🎓 Training & Activities
-                </h3>
+                        margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <h3 style='color: white; font-size: 22px; font-weight: 700; margin: 0;'>
+                        📚 Training & Learning
+                    </h3>
+                    <span style="background: rgba(59, 130, 246, 0.2); color: #3b82f6; 
+                                 padding: 6px 14px; border-radius: 8px; font-size: 11px; 
+                                 font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.3);">
+                        LMS / Oracle Learning
+                    </span>
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 20px;">
+                    Automatically tracked through learning management systems
+                </div>
         """, unsafe_allow_html=True)
         
-        activities_summary = {
-            "📚 Mandatory Trainings": (employee_data['trainings']['mandatory'], "#3b82f6"),
-            "📖 Elective Trainings": (employee_data['trainings']['elective'], "#8b5cf6"),
-            "🛡️ Safety Trainings": (employee_data['trainings']['safety'], "#ef4444"),
-            "✅ Compliance Modules": (employee_data['trainings']['compliance'], "#10b981"),
-            "💡 Innovation Ideas": (employee_data['activities']['innovation_ideas'], "#f59e0b"),
-            "🎯 Ideas Accepted": (employee_data['activities']['ideas_accepted'], "#06b6d4"),
-            "❤️ CSR Activities": (employee_data['activities']['csr_activities'], "#ec4899"),
-            "🧘 Wellness Sessions": (employee_data['activities']['wellness_sessions'], "#84cc16"),
-            "🎪 Corporate Events": (employee_data['activities']['corporate_events'], "#a78bfa")
+        training_activities = {
+            "📚 Mandatory Training Completed": (employee_data['training_learning']['mandatory_training'], "#3b82f6"),
+            "📖 Elective Training Completed": (employee_data['training_learning']['elective_training'], "#8b5cf6"),
+            "🎓 Certifications Completed": (employee_data['training_learning']['certifications'], "#10b981"),
+            "🛡️ Safety Training Completed": (employee_data['training_learning']['safety_training'], "#ef4444"),
+            "✅ Compliance Modules Completed": (employee_data['training_learning']['compliance_modules'], "#06b6d4")
         }
         
-        for label, (value, color) in activities_summary.items():
+        for label, (value, color) in training_activities.items():
             st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; align-items: center; 
-                            padding: 16px 20px; background: rgba(15, 23, 42, 0.5); 
-                            border-radius: 14px; margin-bottom: 10px;
+                            padding: 14px 18px; background: rgba(15, 23, 42, 0.5); 
+                            border-radius: 12px; margin-bottom: 8px;
                             border: 1px solid rgba(148, 163, 184, 0.15);
                             transition: all 0.3s ease;"
                      onmouseover="this.style.borderColor='{color}40'; this.style.transform='scale(1.02)';"
                      onmouseout="this.style.borderColor='rgba(148, 163, 184, 0.15)'; this.style.transform='scale(1)';">
-                    <span style="color: #e2e8f0; font-size: 14px; font-weight: 500;">{label}</span>
+                    <span style="color: #e2e8f0; font-size: 13px; font-weight: 500;">{label}</span>
                     <span style="background: {color}20; color: {color}; font-weight: 700; 
-                                font-size: 20px; padding: 6px 16px; border-radius: 10px;
-                                min-width: 50px; text-align: center; border: 2px solid {color}40;">
+                                font-size: 18px; padding: 4px 14px; border-radius: 8px;
+                                min-width: 45px; text-align: center; border: 2px solid {color}40;">
+                        {value}
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # HR Engagement Activities
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <h3 style='color: white; font-size: 22px; font-weight: 700; margin: 0;'>
+                        👥 HR Engagement
+                    </h3>
+                    <span style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; 
+                                 padding: 6px 14px; border-radius: 8px; font-size: 11px; 
+                                 font-weight: 600; border: 1px solid rgba(139, 92, 246, 0.3);">
+                        Oracle HCM / MS Teams
+                    </span>
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 20px;">
+                    Tracked through HCM, Teams attendance, and HR surveys
+                </div>
+        """, unsafe_allow_html=True)
+        
+        hr_activities = {
+            "📋 Completed Engagement Survey": (employee_data['hr_engagement']['engagement_surveys'], "#a78bfa"),
+            "🎤 Attended HR Session / Town Hall": (employee_data['hr_engagement']['hr_sessions_townhalls'], "#8b5cf6"),
+            "⭐ Perfect Attendance (Monthly)": (employee_data['hr_engagement']['perfect_attendance'], "#ec4899")
+        }
+        
+        for label, (value, color) in hr_activities.items():
+            st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; 
+                            padding: 14px 18px; background: rgba(15, 23, 42, 0.5); 
+                            border-radius: 12px; margin-bottom: 8px;
+                            border: 1px solid rgba(148, 163, 184, 0.15);
+                            transition: all 0.3s ease;"
+                     onmouseover="this.style.borderColor='{color}40'; this.style.transform='scale(1.02)';"
+                     onmouseout="this.style.borderColor='rgba(148, 163, 184, 0.15)'; this.style.transform='scale(1)';">
+                    <span style="color: #e2e8f0; font-size: 13px; font-weight: 500;">{label}</span>
+                    <span style="background: {color}20; color: {color}; font-weight: 700; 
+                                font-size: 18px; padding: 4px 14px; border-radius: 8px;
+                                min-width: 45px; text-align: center; border: 2px solid {color}40;">
+                        {value}
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Innovation Activities
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <h3 style='color: white; font-size: 22px; font-weight: 700; margin: 0;'>
+                        💡 Innovation
+                    </h3>
+                    <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; 
+                                 padding: 6px 14px; border-radius: 8px; font-size: 11px; 
+                                 font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">
+                        SharePoint / Power Automate
+                    </span>
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 20px;">
+                    Tracked through digital idea submission systems
+                </div>
+        """, unsafe_allow_html=True)
+        
+        innovation_activities = {
+            "💡 Submitted Innovation Idea": (employee_data['innovation']['innovation_ideas_submitted'], "#f59e0b"),
+            "🎯 Idea Accepted for Evaluation": (employee_data['innovation']['ideas_accepted'], "#10b981"),
+            "📊 Participated in Digital Survey": (employee_data['innovation']['digital_surveys'], "#06b6d4")
+        }
+        
+        for label, (value, color) in innovation_activities.items():
+            st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; 
+                            padding: 14px 18px; background: rgba(15, 23, 42, 0.5); 
+                            border-radius: 12px; margin-bottom: 8px;
+                            border: 1px solid rgba(148, 163, 184, 0.15);
+                            transition: all 0.3s ease;"
+                     onmouseover="this.style.borderColor='{color}40'; this.style.transform='scale(1.02)';"
+                     onmouseout="this.style.borderColor='rgba(148, 163, 184, 0.15)'; this.style.transform='scale(1)';">
+                    <span style="color: #e2e8f0; font-size: 13px; font-weight: 500;">{label}</span>
+                    <span style="background: {color}20; color: {color}; font-weight: 700; 
+                                font-size: 18px; padding: 4px 14px; border-radius: 8px;
+                                min-width: 45px; text-align: center; border: 2px solid {color}40;">
+                        {value}
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Events & Participation Activities
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <h3 style='color: white; font-size: 22px; font-weight: 700; margin: 0;'>
+                        🎪 Events & Participation
+                    </h3>
+                    <span style="background: rgba(236, 72, 153, 0.2); color: #ec4899; 
+                                 padding: 6px 14px; border-radius: 8px; font-size: 11px; 
+                                 font-weight: 600; border: 1px solid rgba(236, 72, 153, 0.3);">
+                        HR / Event Logs
+                    </span>
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-bottom: 20px;">
+                    Logged by HR, CSR teams, or event attendance lists
+                </div>
+        """, unsafe_allow_html=True)
+        
+        events_activities = {
+            "🎪 Attended Corporate Event": (employee_data['events_participation']['corporate_events'], "#a78bfa"),
+            "❤️ Participated in CSR Activity": (employee_data['events_participation']['csr_activities'], "#ec4899"),
+            "🧘 Participated in Wellness Session": (employee_data['events_participation']['wellness_sessions'], "#84cc16")
+        }
+        
+        for label, (value, color) in events_activities.items():
+            st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; align-items: center; 
+                            padding: 14px 18px; background: rgba(15, 23, 42, 0.5); 
+                            border-radius: 12px; margin-bottom: 8px;
+                            border: 1px solid rgba(148, 163, 184, 0.15);
+                            transition: all 0.3s ease;"
+                     onmouseover="this.style.borderColor='{color}40'; this.style.transform='scale(1.02)';"
+                     onmouseout="this.style.borderColor='rgba(148, 163, 184, 0.15)'; this.style.transform='scale(1)';">
+                    <span style="color: #e2e8f0; font-size: 13px; font-weight: 500;">{label}</span>
+                    <span style="background: {color}20; color: {color}; font-weight: 700; 
+                                font-size: 18px; padding: 4px 14px; border-radius: 8px;
+                                min-width: 45px; text-align: center; border: 2px solid {color}40;">
                         {value}
                     </span>
                 </div>
@@ -790,12 +946,12 @@ with tab1:
             <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
                         border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);">
                 <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
-                    🏅 Certifications
+                    🏅 Certifications Earned
                 </h3>
         """, unsafe_allow_html=True)
         
         cert_colors = ["#667eea", "#f093fb"]
-        for idx, cert in enumerate(employee_data['certifications']):
+        for idx, cert in enumerate(employee_data['certifications_list']):
             color = cert_colors[idx % len(cert_colors)]
             st.markdown(f"""
                 <div style="padding: 20px; 
@@ -909,7 +1065,7 @@ with tab2:
         
         fig_awards.update_layout(
             paper_bgcolor='white',
-            plot_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0, 0, 0, 0)',
             font={'color': "#1e293b", 'family': "Outfit"},
             height=400,
             margin=dict(l=20, r=20, t=20, b=20),
