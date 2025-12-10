@@ -1442,8 +1442,48 @@ def render_admin_manage_items():
                     
                     with col2:
                         if is_custom:
-                            if st.button("✏️ Edit", key=f"edit_act_{activity['id']}", use_container_width=True):
-                                st.info("Edit functionality coming soon")
+                            edit_key = f"edit_act_{activity['id']}"
+                            if st.button("✏️ Edit", key=edit_key, use_container_width=True):
+                                # Store activity being edited
+                                st.session_state[f'editing_{activity["id"]}'] = True
+                            
+                            # Show edit form if this activity is being edited
+                            if st.session_state.get(f'editing_{activity["id"]}', False):
+                                with st.form(key=f"form_edit_{activity['id']}"):
+                                    st.markdown("**Edit Activity**")
+                                    
+                                    new_name = st.text_input("Name", value=activity['name'])
+                                    new_desc = st.text_area("Description", value=activity['description'])
+                                    new_points = st.number_input("Points", value=int(activity.get('points_value', 100)), min_value=1, max_value=10000)
+                                    new_category = st.selectbox("Category", 
+                                        ["training", "surveys", "certifications", "innovation", "events", "performance", "attendance", "other"],
+                                        index=["training", "surveys", "certifications", "innovation", "events", "performance", "attendance", "other"].index(activity['category']))
+                                    new_active = st.checkbox("Active", value=activity.get('is_active', True))
+                                    
+                                    col_save, col_cancel = st.columns(2)
+                                    with col_save:
+                                        if st.form_submit_button("💾 Save", use_container_width=True):
+                                            # Update activity
+                                            activity['name'] = new_name
+                                            activity['description'] = new_desc
+                                            activity['points'] = str(new_points)
+                                            activity['points_value'] = new_points
+                                            activity['category'] = new_category
+                                            activity['is_active'] = new_active
+                                            
+                                            add_audit_log(
+                                                st.session_state.current_user_id,
+                                                "updated_activity",
+                                                f"Updated activity: {new_name}"
+                                            )
+                                            st.session_state[f'editing_{activity["id"]}'] = False
+                                            st.success(f"✅ Updated {new_name}")
+                                            st.rerun()
+                                    
+                                    with col_cancel:
+                                        if st.form_submit_button("❌ Cancel", use_container_width=True):
+                                            st.session_state[f'editing_{activity["id"]}'] = False
+                                            st.rerun()
                     
                     with col3:
                         if is_custom:
@@ -1546,11 +1586,45 @@ def render_admin_manage_items():
                         """, unsafe_allow_html=True)
                     
                     with col2:
-                        if st.button("✏️ Edit", key=f"edit_red_{item['id']}", use_container_width=True):
-                            st.info("Edit functionality coming soon")
+                        edit_red_key = f"edit_red_{item['id']}"
+                        if st.button("✏️ Edit", key=edit_red_key, use_container_width=True):
+                            st.session_state[f'editing_red_{item["id"]}'] = True
+                        
+                        # Show edit form if this item is being edited
+                        if st.session_state.get(f'editing_red_{item["id"]}', False):
+                            with st.form(key=f"form_red_{item['id']}"):
+                                st.markdown("**Edit Redemption**")
+                                
+                                new_name = st.text_input("Name", value=item['name'])
+                                new_desc = st.text_area("Description", value=item['description'])
+                                new_points = st.number_input("Points Cost", value=item['points'], min_value=100, max_value=100000, step=100)
+                                new_value = st.text_input("Value", value=item['value'])
+                                
+                                col_save, col_cancel = st.columns(2)
+                                with col_save:
+                                    if st.form_submit_button("💾 Save", use_container_width=True):
+                                        # Update redemption item
+                                        item['name'] = new_name
+                                        item['description'] = new_desc
+                                        item['points'] = new_points
+                                        item['value'] = new_value
+                                        
+                                        add_audit_log(
+                                            st.session_state.current_user_id,
+                                            "updated_redemption",
+                                            f"Updated redemption: {new_name} - {new_points:,} pts"
+                                        )
+                                        st.session_state[f'editing_red_{item["id"]}'] = False
+                                        st.success(f"✅ Updated {new_name}")
+                                        st.rerun()
+                                
+                                with col_cancel:
+                                    if st.form_submit_button("❌ Cancel", use_container_width=True):
+                                        st.session_state[f'editing_red_{item["id"]}'] = False
+                                        st.rerun()
                     
                     with col3:
-                        pass  # System redemptions can't be deleted
+                        pass  # Keep for future delete functionality if needed
         
         st.markdown("---")
         st.info("💡 To add custom redemption options, contact system administrator")
@@ -1560,7 +1634,7 @@ def render_admin_manage_items():
         st.markdown("**All achievement levels in the system**")
         
         for level in LEVELS:
-            col1, col2, col3, col4 = st.columns([1, 2, 2, 2])
+            col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1])
             
             with col1:
                 st.markdown(f"<div style='text-align: center; font-size: 48px;'>{level['icon']}</div>", unsafe_allow_html=True)
@@ -1577,29 +1651,63 @@ def render_admin_manage_items():
                 st.markdown(f"""
                     <div style="padding: 12px;">
                         <div style="font-size: 14px; color: #60a5fa;">Min Points</div>
-                        <div style="font-size: 16px; font-weight: 700; color: white;">{level['min_points']:,}</div>
+                        <div style="font-size: 16px; font-weight: 700; color: white;">{level['points_min']:,}</div>
                     </div>
                 """, unsafe_allow_html=True)
             
             with col4:
-                max_pts = level['max_points'] if level['max_points'] != float('inf') else "∞"
+                max_pts = level['points_max'] if level['points_max'] < 999999 else "∞"
                 st.markdown(f"""
                     <div style="padding: 12px;">
                         <div style="font-size: 14px; color: #60a5fa;">Max Points</div>
-                        <div style="font-size: 16px; font-weight: 700; color: white;">{max_pts}</div>
+                        <div style="font-size: 16px; font-weight: 700; color: white;">{max_pts if isinstance(max_pts, str) else f'{max_pts:,}'}</div>
                     </div>
                 """, unsafe_allow_html=True)
             
+            with col5:
+                edit_level_key = f"edit_level_{level['id']}"
+                if st.button("✏️", key=edit_level_key, use_container_width=True, help="Edit level thresholds"):
+                    st.session_state[f'editing_level_{level["id"]}'] = True
+            
+            # Show edit form if this level is being edited
+            if st.session_state.get(f'editing_level_{level["id"]}', False):
+                with st.form(key=f"form_level_{level['id']}"):
+                    st.markdown(f"**Edit {level['name']} Level**")
+                    
+                    col_form1, col_form2 = st.columns(2)
+                    with col_form1:
+                        new_min = st.number_input("Min Points", value=level['points_min'], min_value=0, max_value=1000000, step=100)
+                    with col_form2:
+                        new_max = st.number_input("Max Points", value=level['points_max'], min_value=0, max_value=1000000, step=100)
+                    
+                    col_save, col_cancel = st.columns(2)
+                    with col_save:
+                        if st.form_submit_button("💾 Save", use_container_width=True):
+                            level['points_min'] = new_min
+                            level['points_max'] = new_max
+                            
+                            add_audit_log(
+                                st.session_state.current_user_id,
+                                "updated_level",
+                                f"Updated {level['name']} level: {new_min:,} - {new_max:,} pts"
+                            )
+                            st.session_state[f'editing_level_{level["id"]}'] = False
+                            st.success(f"✅ Updated {level['name']} level")
+                            st.rerun()
+                    
+                    with col_cancel:
+                        if st.form_submit_button("❌ Cancel", use_container_width=True):
+                            st.session_state[f'editing_level_{level["id"]}'] = False
+                            st.rerun()
+            
             st.markdown("---")
-        
-        st.info("💡 Level thresholds are configured in the system. Contact administrator to modify.")
     
     with item_tabs[4]:  # Badges
         st.markdown("#### 🏆 Badge Definitions")
         st.markdown("**All achievement badges employees can earn**")
         
         for badge in BADGES:
-            col1, col2, col3, col4 = st.columns([1, 2, 2, 2])
+            col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1])
             
             with col1:
                 st.markdown(f"<div style='text-align: center; font-size: 48px;'>{badge['icon']}</div>", unsafe_allow_html=True)
@@ -1629,9 +1737,43 @@ def render_admin_manage_items():
                     </div>
                 """, unsafe_allow_html=True)
             
+            with col5:
+                edit_badge_key = f"edit_badge_{badge['id']}"
+                if st.button("✏️", key=edit_badge_key, use_container_width=True, help="Edit badge criteria"):
+                    st.session_state[f'editing_badge_{badge["id"]}'] = True
+            
+            # Show edit form if this badge is being edited
+            if st.session_state.get(f'editing_badge_{badge["id"]}', False):
+                with st.form(key=f"form_badge_{badge['id']}"):
+                    st.markdown(f"**Edit {badge['name']} Badge**")
+                    
+                    new_criteria = st.text_input("Criteria", value=badge['criteria'])
+                    new_threshold = st.number_input("Threshold", value=int(threshold), min_value=1, max_value=1000, step=1)
+                    
+                    col_save, col_cancel = st.columns(2)
+                    with col_save:
+                        if st.form_submit_button("💾 Save", use_container_width=True):
+                            badge['criteria'] = new_criteria
+                            if 'points_threshold' in badge:
+                                badge['points_threshold'] = new_threshold
+                            else:
+                                badge['count_threshold'] = new_threshold
+                            
+                            add_audit_log(
+                                st.session_state.current_user_id,
+                                "updated_badge",
+                                f"Updated {badge['name']} badge: {new_criteria} (threshold: {new_threshold})"
+                            )
+                            st.session_state[f'editing_badge_{badge["id"]}'] = False
+                            st.success(f"✅ Updated {badge['name']} badge")
+                            st.rerun()
+                    
+                    with col_cancel:
+                        if st.form_submit_button("❌ Cancel", use_container_width=True):
+                            st.session_state[f'editing_badge_{badge["id"]}'] = False
+                            st.rerun()
+            
             st.markdown("---")
-        
-        st.info("💡 Badge criteria are configured in the system. Contact administrator to add new badges.")
 
 def render_admin_pending_requests():
     """Render pending reward and redemption requests with approve/reject actions"""
