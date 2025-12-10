@@ -549,21 +549,27 @@ def render_employee_overview(points_by_category: Dict, total_points: int):
     
     with col1:
         # Pie chart of points by category
-        if points_by_category:
-            fig_pie = go.Figure(data=[go.Pie(
-                labels=list(points_by_category.keys()),
-                values=list(points_by_category.values()),
-                hole=0.4,
-                marker=dict(colors=['#3b82f6', '#a78bfa', '#ec4899', '#4ade80', '#fbbf24', '#ef4444'])
-            )])
-            fig_pie.update_layout(
-                title="Points Distribution by Category",
-                paper_bgcolor='transparent',
-                plot_bgcolor='transparent',
-                font=dict(color='white', family='Outfit'),
-                height=350
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
+        if points_by_category and len(points_by_category) > 0:
+            try:
+                fig_pie = go.Figure(data=[go.Pie(
+                    labels=list(points_by_category.keys()),
+                    values=list(points_by_category.values()),
+                    hole=0.4,
+                    marker=dict(colors=['#3b82f6', '#a78bfa', '#ec4899', '#4ade80', '#fbbf24', '#ef4444'])
+                )])
+                fig_pie.update_layout(
+                    title=dict(text="Points Distribution by Category"),
+                    paper_bgcolor='transparent',
+                    plot_bgcolor='transparent',
+                    font=dict(color='white', family='Outfit'),
+                    height=350,
+                    showlegend=True
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+            except Exception as e:
+                st.info("No points data available for chart")
+        else:
+            st.info("No points earned yet. Start submitting requests!")
     
     with col2:
         # Bar chart of recent activities
@@ -572,17 +578,24 @@ def render_employee_overview(points_by_category: Dict, total_points: int):
         recent_activities.sort(key=lambda x: x["date"], reverse=True)
         recent_activities = recent_activities[:10]
         
-        if recent_activities:
-            df_activities = pd.DataFrame(recent_activities)
-            fig_bar = px.bar(df_activities, x='date', y='points', color='category',
-                           title="Recent Points Earned")
-            fig_bar.update_layout(
-                paper_bgcolor='transparent',
-                plot_bgcolor='transparent',
-                font=dict(color='white', family='Outfit'),
-                height=350
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
+        if recent_activities and len(recent_activities) > 0:
+            try:
+                df_activities = pd.DataFrame(recent_activities)
+                fig_bar = px.bar(df_activities, x='date', y='points', color='category',
+                               title="Recent Points Earned")
+                fig_bar.update_layout(
+                    paper_bgcolor='transparent',
+                    plot_bgcolor='transparent',
+                    font=dict(color='white', family='Outfit'),
+                    height=350,
+                    xaxis=dict(title="Date"),
+                    yaxis=dict(title="Points")
+                )
+                st.plotly_chart(fig_bar, use_container_width=True)
+            except Exception as e:
+                st.info("No activity data available for chart")
+        else:
+            st.info("No recent activities to display")
 
 def render_submit_reward_request():
     """Render form to submit new reward point request"""
@@ -954,19 +967,27 @@ def render_organization_dashboard():
                 dept = user["department"]
                 dept_points[dept] = dept_points.get(dept, 0) + points
         
-        fig_dept = go.Figure(data=[go.Bar(
-            x=list(dept_points.keys()),
-            y=list(dept_points.values()),
-            marker=dict(color='#3b82f6')
-        )])
-        fig_dept.update_layout(
-            title="Points by Department",
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            font=dict(color='#1e293b', family='Outfit'),
-            height=350
-        )
-        st.plotly_chart(fig_dept, use_container_width=True)
+        if dept_points and len(dept_points) > 0:
+            try:
+                fig_dept = go.Figure(data=[go.Bar(
+                    x=list(dept_points.keys()),
+                    y=list(dept_points.values()),
+                    marker=dict(color='#3b82f6')
+                )])
+                fig_dept.update_layout(
+                    title=dict(text="Points by Department"),
+                    paper_bgcolor='white',
+                    plot_bgcolor='white',
+                    font=dict(color='#1e293b', family='Outfit'),
+                    height=350,
+                    xaxis=dict(title="Department"),
+                    yaxis=dict(title="Total Points")
+                )
+                st.plotly_chart(fig_dept, use_container_width=True)
+            except Exception as e:
+                st.info("Unable to display department chart")
+        else:
+            st.info("No department data available")
     
     with col2:
         # Level distribution
@@ -978,20 +999,27 @@ def render_organization_dashboard():
                 level_name = level["name"]
                 level_dist[level_name] = level_dist.get(level_name, 0) + 1
         
-        fig_levels = go.Figure(data=[go.Pie(
-            labels=list(level_dist.keys()),
-            values=list(level_dist.values()),
-            hole=0.4,
-            marker=dict(colors=['#cd7f32', '#c0c0c0', '#ffd700', '#e5e4e2', '#4169e1', '#9966cc'])
-        )])
-        fig_levels.update_layout(
-            title="Employee Level Distribution",
-            paper_bgcolor='white',
-            plot_bgcolor='white',
-            font=dict(color='#1e293b', family='Outfit'),
-            height=350
-        )
-        st.plotly_chart(fig_levels, use_container_width=True)
+        if level_dist and len(level_dist) > 0:
+            try:
+                fig_levels = go.Figure(data=[go.Pie(
+                    labels=list(level_dist.keys()),
+                    values=list(level_dist.values()),
+                    hole=0.4,
+                    marker=dict(colors=['#cd7f32', '#c0c0c0', '#ffd700', '#e5e4e2', '#4169e1', '#9966cc'])
+                )])
+                fig_levels.update_layout(
+                    title=dict(text="Employee Level Distribution"),
+                    paper_bgcolor='white',
+                    plot_bgcolor='white',
+                    font=dict(color='#1e293b', family='Outfit'),
+                    height=350,
+                    showlegend=True
+                )
+                st.plotly_chart(fig_levels, use_container_width=True)
+            except Exception as e:
+                st.info("Unable to display level distribution chart")
+        else:
+            st.info("No level data available")
     
     # Leaderboard
     st.markdown("### 🏆 Company Leaderboard")
