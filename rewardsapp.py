@@ -297,49 +297,102 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Fake Employee Data with Structured Activities
+# Fake Employee Data with Alkhorayef Rewards System
 employee_data = {
     "name": "Andrei Spitzer",
     "role": "Digital Designer",
     "department": "PR & Marketing",
     "tenure_days": 168,
-    "level": 7,
-    "xp_current": 580,
-    "xp_required": 800,
-    "coins": 72,
-    "league": "Sapphire",
-    "aura": "Master",
+    "level": 3,  # Gold level
+    "level_name": "Gold",
+    "level_icon": "🥇",
+    "points_current": 3580,
+    "points_required": 5000,  # Next level: Champion
+    "points_lifetime": 3580,
+    "coins": 358,  # 10 points = 1 SAR (coin)
+    "league": "Gold",
+    "aura": "Advanced",
+    "rank": 7,  # Company-wide rank
+    "rank_department": 2,  # Department rank
     
-    # Organized by Category
+    # Organized by Category with REAL Alkhorayef points
     "training_learning": {
-        "mandatory_training": 14,
-        "elective_training": 8,
-        "certifications": 2,  # Count of certifications
-        "safety_training": 3,
-        "compliance_modules": 6
+        "mandatory_training_hours": 42,  # hours completed
+        "mandatory_training_points": 840,  # 20 points per hour avg
+        "elective_training_hours": 24,
+        "elective_training_points": 480,
+        "certifications": 2,  
+        "certifications_points": 500,  # 250 points each
+        "safety_training_hours": 8,
+        "safety_training_points": 160,
+        "compliance_modules": 6,
+        "compliance_modules_points": 180  # 30 points each
     },
     
     "hr_engagement": {
         "engagement_surveys": 3,
+        "engagement_surveys_points": 30,  # 10 points each
         "hr_sessions_townhalls": 4,
-        "perfect_attendance": 2  # months
+        "hr_sessions_points": 40,  # 10 points each
+        "perfect_attendance_months": 0,  # 3-month periods
+        "perfect_attendance_points": 0  # 1000 points per 3 months
     },
     
     "innovation": {
-        "innovation_ideas_submitted": 5,
-        "ideas_accepted": 2,
-        "digital_surveys": 6
+        "innovation_ideas_submitted": 2,
+        "innovation_ideas_points": 60,  # Base submission
+        "ideas_accepted": 1,
+        "ideas_accepted_points": 1000,  # Digital Champion
+        "digital_surveys": 6,
+        "digital_surveys_points": 48  # 8 points each
     },
     
     "events_participation": {
         "corporate_events": 4,
+        "corporate_events_points": 80,  # 20 points each
         "csr_activities": 2,
-        "wellness_sessions": 3
+        "csr_activities_points": 200,  # 100 points each
+        "wellness_sessions": 3,
+        "wellness_sessions_points": 45  # 15 points each
+    },
+    
+    # Points breakdown
+    "points_breakdown": {
+        "training": 2160,
+        "surveys": 78,
+        "innovation": 1108,
+        "engagement": 70,
+        "events": 325,
+        "special": 0
     },
     
     # Certification details
-    "certifications_list": ["Azure Fundamentals", "Lean Six Sigma Yellow Belt"]
+    "certifications_list": ["Azure Fundamentals", "Lean Six Sigma Yellow Belt"],
+    
+    # Redemption history
+    "points_redeemed": 0,
+    "pending_redemptions": 0
 }
+
+# Alkhorayef Level System
+level_system = [
+    {"level": 1, "name": "Bronze", "icon": "🥉", "points": 0, "color": "#cd7f32"},
+    {"level": 2, "name": "Silver", "icon": "🥈", "points": 500, "color": "#c0c0c0"},
+    {"level": 3, "name": "Gold", "icon": "🥇", "points": 1000, "color": "#ffd700"},
+    {"level": 4, "name": "Champion", "icon": "🏅", "points": 3000, "color": "#4169e1"},
+    {"level": 5, "name": "Platinum", "icon": "💎", "points": 5000, "color": "#e5e4e2"},
+    {"level": 6, "name": "Grand Master", "icon": "👑", "points": 8000, "color": "#9966cc"}
+]
+
+# Redemption options
+redemption_options = [
+    {"name": "Vacation Days", "points": 4000, "value": "2 Days", "icon": "🏖️", "category": "Time Off"},
+    {"name": "Shopping Voucher", "points": 5000, "value": "500 SAR", "icon": "🛍️", "category": "Vouchers"},
+    {"name": "Cash Reward", "points": 1500, "value": "150 SAR", "icon": "💵", "category": "Cash"},
+    {"name": "Gym Membership", "points": 3000, "value": "3 Months", "icon": "🏋️", "category": "Wellness"},
+    {"name": "Training Course", "points": 2500, "value": "Course Credit", "icon": "📚", "category": "Learning"},
+    {"name": "Tech Gadget", "points": 8000, "value": "800 SAR", "icon": "📱", "category": "Electronics"}
+]
 
 # KPI Data
 kpi_data = [
@@ -414,7 +467,7 @@ with tab1:
         </style>
     """, unsafe_allow_html=True)
     
-    # Profile Header with better styling
+    # Profile Header with Alkhorayef Level System
     st.markdown(f"""
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                     border-radius: 24px; padding: 40px; margin-bottom: 40px;
@@ -425,11 +478,11 @@ with tab1:
                     <p style='font-size: 20px; opacity: 0.95; margin-bottom: 24px; color: white;'>
                         {employee_data['role']} • {employee_data['department']}
                     </p>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
                         <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
                                      border-radius: 12px; padding: 10px 20px; font-weight: 600; 
                                      font-size: 15px; color: white; border: 1px solid rgba(255,255,255,0.3);">
-                            🏅 {employee_data['league']} League
+                            {employee_data['level_icon']} {employee_data['level_name']} Level
                         </span>
                         <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
                                      border-radius: 12px; padding: 10px 20px; font-weight: 600; 
@@ -439,26 +492,41 @@ with tab1:
                         <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
                                      border-radius: 12px; padding: 10px 20px; font-weight: 600; 
                                      font-size: 15px; color: white; border: 1px solid rgba(255,255,255,0.3);">
-                            ✨ {employee_data['aura']} Aura
+                            🏆 Rank #{employee_data['rank']} Company | #{employee_data['rank_department']} Dept
                         </span>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.15); padding: 16px; border-radius: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 14px; font-weight: 600;">Progress to Next Level</span>
+                            <span style="font-size: 14px; font-weight: 600;">{employee_data['points_current']:,} / {employee_data['points_required']:,} pts</span>
+                        </div>
+                        <div style="height: 12px; background: rgba(255, 255, 255, 0.2); border-radius: 6px; overflow: hidden;">
+                            <div style="width: {(employee_data['points_current'] / employee_data['points_required']) * 100}%; 
+                                        height: 100%; background: linear-gradient(90deg, #4ade80 0%, #10b981 100%); 
+                                        transition: width 1s ease;"></div>
+                        </div>
+                        <div style="font-size: 12px; margin-top: 6px; opacity: 0.9;">
+                            {employee_data['points_required'] - employee_data['points_current']:,} points to {level_system[employee_data['level']]['name']} level
+                        </div>
                     </div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="width: 180px; height: 180px; border-radius: 50%; 
-                                background: linear-gradient(135deg, #4ade80 0%, #3b82f6 100%);
+                    <div style="width: 200px; height: 200px; border-radius: 50%; 
+                                background: linear-gradient(135deg, {level_system[employee_data['level']-1]['color']} 0%, rgba(255,255,255,0.3) 100%);
                                 display: flex; align-items: center; justify-content: center;
-                                position: relative; box-shadow: 0 10px 40px rgba(74, 222, 128, 0.4);">
-                        <div style="width: 160px; height: 160px; border-radius: 50%; 
-                                    background: #1e293b; display: flex; flex-direction: column; 
+                                position: relative; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);">
+                        <div style="width: 175px; height: 175px; border-radius: 50%; 
+                                    background: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; 
                                     align-items: center; justify-content: center;">
-                            <div style="font-size: 32px; font-weight: 800; color: #4ade80;">
-                                Level {employee_data['level']}
+                            <div style="font-size: 64px; margin-bottom: 8px;">{employee_data['level_icon']}</div>
+                            <div style="font-size: 24px; font-weight: 800; color: {level_system[employee_data['level']-1]['color']};">
+                                {employee_data['level_name']}
                             </div>
-                            <div style="font-size: 18px; color: #94a3b8; margin-top: 8px;">
-                                {employee_data['xp_current']}/{employee_data['xp_required']} XP
+                            <div style="font-size: 14px; color: #64748b; margin-top: 4px;">
+                                Level {employee_data['level']}/6
                             </div>
-                            <div style="font-size: 14px; color: #4ade80; margin-top: 4px;">
-                                {int((employee_data['xp_current'] / employee_data['xp_required']) * 100)}%
+                            <div style="font-size: 20px; font-weight: 700; color: #3b82f6; margin-top: 8px;">
+                                {employee_data['points_lifetime']:,} pts
                             </div>
                         </div>
                     </div>
@@ -569,9 +637,7 @@ with tab1:
             name='25% KPIs',
             mode='lines+markers',
             line=dict(color='#4ade80', width=4, shape='spline'),
-            marker=dict(size=10, color='#4ade80', line=dict(color='white', width=2)),
-            fill='tonexty',
-            fillcolor='rgba(74, 222, 128, 0.1)'
+            marker=dict(size=10, color='#4ade80', line=dict(color='white', width=2))
         ))
         
         fig_performance.add_trace(go.Scatter(
@@ -580,9 +646,7 @@ with tab1:
             name='40% KPIs',
             mode='lines+markers',
             line=dict(color='#3b82f6', width=4, shape='spline'),
-            marker=dict(size=10, color='#3b82f6', line=dict(color='white', width=2)),
-            fill='tonexty',
-            fillcolor='rgba(59, 130, 246, 0.1)'
+            marker=dict(size=10, color='#3b82f6', line=dict(color='white', width=2))
         ))
         
         fig_performance.add_trace(go.Scatter(
