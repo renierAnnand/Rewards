@@ -668,7 +668,7 @@ with tab1:
         ))
         
         fig_performance.update_layout(
-            paper_bgcolor='rgba(0, 0, 0, 0)',
+            paper_bgcolor='transparent',
             plot_bgcolor='rgba(15, 23, 42, 0.5)',
             font={'color': "white", 'family': "Outfit", 'size': 12},
             height=380,
@@ -754,7 +754,7 @@ with tab1:
                     linecolor='rgba(148, 163, 184, 0.3)'
                 )
             ),
-            paper_bgcolor='rgba(0, 0, 0, 0)',
+            paper_bgcolor='transparent',
             font={'color': "white", 'family': "Outfit"},
             height=450,
             margin=dict(l=80, r=80, t=40, b=40),
@@ -1129,7 +1129,7 @@ with tab2:
         
         fig_awards.update_layout(
             paper_bgcolor='white',
-            plot_bgcolor='rgba(0, 0, 0, 0)',
+            plot_bgcolor='transparent',
             font={'color': "#1e293b", 'family': "Outfit"},
             height=400,
             margin=dict(l=20, r=20, t=20, b=20),
