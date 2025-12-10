@@ -209,13 +209,13 @@ if 'initialized' not in st.session_state:
     st.session_state.users = [
         {"id": 1, "name": "Ahmed Al-Saud", "email": "ahmed@alkhorayef.com", "department": "Engineering", "role": "user", "join_date": "2023-01-15"},
         {"id": 2, "name": "Fatima Al-Rashid", "email": "fatima@alkhorayef.com", "department": "HR", "role": "admin", "join_date": "2022-06-10"},
-        {"id": 3, "name": "Andrei Spitzer", "email": "andrei@alkhorayef.com", "department": "PR & Marketing", "role": "user", "join_date": "2023-06-20"},
+        {"id": 3, "name": "Renier Annandale", "email": "renier@alkhorayef.com", "department": "IT", "title": "Digital Transformation Director", "role": "user", "join_date": "2023-06-20"},
         {"id": 4, "name": "Sara Al-Mutairi", "email": "sara@alkhorayef.com", "department": "Finance", "role": "user", "join_date": "2022-03-05"},
         {"id": 5, "name": "Mohammed Al-Qahtani", "email": "mohammed@alkhorayef.com", "department": "Operations", "role": "user", "join_date": "2021-11-12"}
     ]
     
     # Current user (for demo purposes - in production, this would be from authentication)
-    st.session_state.current_user_id = 3  # Andrei
+    st.session_state.current_user_id = 3  # Renier
     
     # Points ledger (all point transactions)
     st.session_state.points_ledger = [
@@ -257,8 +257,8 @@ if 'initialized' not in st.session_state:
     
     # Audit log
     st.session_state.audit_log = [
-        {"id": 1, "user_id": 2, "action": "approved_reward_request", "details": "Approved 840 points for Andrei Spitzer - Training", "date": "2024-11-15 14:30"},
-        {"id": 2, "user_id": 2, "action": "approved_redemption", "details": "Approved Cash Reward redemption for Andrei Spitzer", "date": "2024-12-06 10:15"},
+        {"id": 1, "user_id": 2, "action": "approved_reward_request", "details": "Approved 840 points for Renier Annandale - Training", "date": "2024-11-15 14:30"},
+        {"id": 2, "user_id": 2, "action": "approved_redemption", "details": "Approved Cash Reward redemption for Renier Annandale", "date": "2024-12-06 10:15"},
         {"id": 3, "user_id": 3, "action": "submitted_reward_request", "details": "Submitted request for 200 points - Training", "date": "2024-12-08 09:20"},
         {"id": 4, "user_id": 4, "action": "submitted_redemption", "details": "Requested Gym Membership redemption", "date": "2024-12-07 16:45"}
     ]
@@ -437,6 +437,10 @@ def render_employee_dashboard():
         points_to_next = next_level["points_min"] - total_points
     
     # Profile Header
+    # Profile header - get title if it exists
+    user_title = current_user.get('title', '')
+    dept_display = f"{user_title}<br>{current_user['department']}" if user_title else current_user['department']
+    
     st.markdown(f"""
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                     border-radius: 24px; padding: 40px; margin-bottom: 40px;
@@ -444,8 +448,8 @@ def render_employee_dashboard():
             <div style="display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;">
                 <div>
                     <h1 style='font-size: 48px; font-weight: 800; margin-bottom: 12px; color: white;'>{current_user['name']}</h1>
-                    <p style='font-size: 20px; opacity: 0.95; margin-bottom: 24px; color: white;'>
-                        {current_user['department']}
+                    <p style='font-size: 20px; opacity: 0.95; margin-bottom: 24px; color: white; line-height: 1.4;'>
+                        {dept_display}
                     </p>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
                         <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
@@ -1568,10 +1572,15 @@ def main():
         # Get current user
         current_user = next(u for u in st.session_state.users if u["id"] == st.session_state.current_user_id)
         
+        # Format display with title if exists
+        user_title = current_user.get('title', '')
+        role_display = f'<div style="font-size: 14px; font-weight: 600; color: #a78bfa; margin-bottom: 2px;">{user_title}</div>' if user_title else ''
+        
         st.markdown(f"""
             <div style="padding: 16px; background: rgba(30, 41, 59, 0.6); border-radius: 12px; margin-bottom: 20px;">
                 <div style="font-size: 14px; color: #94a3b8; margin-bottom: 4px;">Logged in as</div>
                 <div style="font-size: 16px; font-weight: 700; color: white;">{current_user['name']}</div>
+                {role_display}
                 <div style="font-size: 13px; color: #94a3b8;">{current_user['department']}</div>
             </div>
         """, unsafe_allow_html=True)
