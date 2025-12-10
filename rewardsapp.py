@@ -397,84 +397,93 @@ with tab1:
     st.markdown("""
         <style>
             [data-testid="stAppViewContainer"] {
-                background: #0f1425;
+                background: linear-gradient(135deg, #0f1425 0%, #1a1f3a 100%);
             }
         </style>
     """, unsafe_allow_html=True)
     
-    # Profile Header
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.markdown(f"""
-            <div class="profile-header">
-                <h1 style='margin-bottom: 8px;'>{employee_data['name']}</h1>
-                <p style='font-size: 18px; opacity: 0.9; margin-bottom: 16px;'>{employee_data['role']} • {employee_data['department']}</p>
+    # Profile Header with better styling
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    border-radius: 24px; padding: 40px; margin-bottom: 40px;
+                    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);">
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;">
                 <div>
-                    <span class="level-badge">🏅 League: {employee_data['league']}</span>
-                    <span class="level-badge">📅 In company: {employee_data['tenure_days']} days</span>
-                    <span class="level-badge">✨ Aura: {employee_data['aura']}</span>
+                    <h1 style='font-size: 48px; font-weight: 800; margin-bottom: 12px; color: white;'>{employee_data['name']}</h1>
+                    <p style='font-size: 20px; opacity: 0.95; margin-bottom: 24px; color: white;'>
+                        {employee_data['role']} • {employee_data['department']}
+                    </p>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
+                                     border-radius: 12px; padding: 10px 20px; font-weight: 600; 
+                                     font-size: 15px; color: white; border: 1px solid rgba(255,255,255,0.3);">
+                            🏅 {employee_data['league']} League
+                        </span>
+                        <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
+                                     border-radius: 12px; padding: 10px 20px; font-weight: 600; 
+                                     font-size: 15px; color: white; border: 1px solid rgba(255,255,255,0.3);">
+                            📅 {employee_data['tenure_days']} days
+                        </span>
+                        <span style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); 
+                                     border-radius: 12px; padding: 10px 20px; font-weight: 600; 
+                                     font-size: 15px; color: white; border: 1px solid rgba(255,255,255,0.3);">
+                            ✨ {employee_data['aura']} Aura
+                        </span>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="width: 180px; height: 180px; border-radius: 50%; 
+                                background: linear-gradient(135deg, #4ade80 0%, #3b82f6 100%);
+                                display: flex; align-items: center; justify-content: center;
+                                position: relative; box-shadow: 0 10px 40px rgba(74, 222, 128, 0.4);">
+                        <div style="width: 160px; height: 160px; border-radius: 50%; 
+                                    background: #1e293b; display: flex; flex-direction: column; 
+                                    align-items: center; justify-content: center;">
+                            <div style="font-size: 32px; font-weight: 800; color: #4ade80;">
+                                Level {employee_data['level']}
+                            </div>
+                            <div style="font-size: 18px; color: #94a3b8; margin-top: 8px;">
+                                {employee_data['xp_current']}/{employee_data['xp_required']} XP
+                            </div>
+                            <div style="font-size: 14px; color: #4ade80; margin-top: 4px;">
+                                {int((employee_data['xp_current'] / employee_data['xp_required']) * 100)}%
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        """, unsafe_allow_html=True)
+        </div>
+    """, unsafe_allow_html=True)
     
-    with col2:
-        # Level Progress Circle
-        progress_percent = (employee_data['xp_current'] / employee_data['xp_required']) * 100
-        
-        fig_level = go.Figure(go.Indicator(
-            mode="gauge+number+delta",
-            value=employee_data['xp_current'],
-            domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': f"Level {employee_data['level']}", 'font': {'size': 24, 'color': 'white'}},
-            delta={'reference': employee_data['xp_required'], 'suffix': f" / {employee_data['xp_required']} XP"},
-            gauge={
-                'axis': {'range': [None, employee_data['xp_required']], 'tickwidth': 1, 'tickcolor': "white"},
-                'bar': {'color': "#4ade80"},
-                'bgcolor': "rgba(255, 255, 255, 0.1)",
-                'borderwidth': 2,
-                'bordercolor': "rgba(255, 255, 255, 0.2)",
-                'steps': [
-                    {'range': [0, employee_data['xp_required']], 'color': 'rgba(255, 255, 255, 0.05)'}
-                ],
-                'threshold': {
-                    'line': {'color': "#3b82f6", 'width': 4},
-                    'thickness': 0.75,
-                    'value': employee_data['xp_current']
-                }
-            }
-        ))
-        
-        fig_level.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font={'color': "white", 'family': "Outfit"},
-            height=250,
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        
-        st.plotly_chart(fig_level, use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Metrics Row
+    # Metrics Row - Improved Design
+    st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3, col4, col5 = st.columns(5)
     
-    metrics = [
-        ("🎯", "Missions", 365, col1),
-        ("💬", "Social Activity", 125, col2),
-        ("🌟", "Competencies", 160, col3),
-        ("❤️", "Helpfulness", 15, col4),
-        ("🪙", "Coins", employee_data['coins'], col5)
+    metrics_config = [
+        ("🎯", "Missions", 365, "#4ade80", col1),
+        ("💬", "Social Activity", 125, "#3b82f6", col2),
+        ("🌟", "Competencies", 160, "#a78bfa", col3),
+        ("❤️", "Helpfulness", 15, "#ec4899", col4),
+        ("🪙", "Coins", employee_data['coins'], "#fbbf24", col5)
     ]
     
-    for icon, label, value, col in metrics:
+    for icon, label, value, color, col in metrics_config:
         with col:
             st.markdown(f"""
-                <div class="stat-card">
-                    <div style="font-size: 28px;">{icon}</div>
-                    <div class="stat-number">{value}</div>
-                    <div class="stat-label">{label}</div>
+                <div style="background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(10px);
+                            border-radius: 20px; padding: 28px 20px; text-align: center;
+                            border: 1px solid rgba(148, 163, 184, 0.2);
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 24px rgba(0, 0, 0, 0.2)';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.1)';">
+                    <div style="font-size: 42px; margin-bottom: 16px;">{icon}</div>
+                    <div style="font-size: 36px; font-weight: 800; color: {color}; margin-bottom: 8px;">
+                        {value}
+                    </div>
+                    <div style="font-size: 13px; color: #94a3b8; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+                        {label}
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
     
@@ -485,36 +494,72 @@ with tab1:
     
     with col1:
         # KPIs Section
-        st.markdown("<h3 style='color: white; margin-bottom: 20px;'>📈 Key Performance Indicators</h3>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 30px;">
+                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
+                    📈 Key Performance Indicators
+                </h3>
+        """, unsafe_allow_html=True)
         
         for kpi in kpi_data:
+            color = "#4ade80" if kpi['progress'] >= 75 else "#fbbf24" if kpi['progress'] >= 50 else "#ef4444"
             st.markdown(f"""
-                <div class="kpi-item">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <div class="kpi-title">{kpi['name']}</div>
-                        <div style="color: #4ade80; font-weight: 700; font-size: 18px;">{kpi['progress']}%</div>
+                <div style="background: rgba(15, 23, 42, 0.5); border-radius: 16px; 
+                            padding: 20px; margin-bottom: 16px; border: 1px solid rgba(148, 163, 184, 0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div style="color: #e2e8f0; font-weight: 500; font-size: 15px; flex: 1;">
+                            {kpi['name']}
+                        </div>
+                        <div style="background: {color}20; color: {color}; font-weight: 700; 
+                                    font-size: 20px; padding: 8px 16px; border-radius: 10px;
+                                    border: 2px solid {color}40;">
+                            {kpi['progress']}%
+                        </div>
                     </div>
-                    <div class="kpi-bar">
-                        <div class="kpi-progress" style="width: {kpi['progress']}%;"></div>
+                    <div style="height: 12px; background: rgba(148, 163, 184, 0.15); 
+                                border-radius: 8px; overflow: hidden; position: relative;">
+                        <div style="width: {kpi['progress']}%; height: 100%; 
+                                    background: linear-gradient(90deg, {color} 0%, {color}80 100%);
+                                    border-radius: 8px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+                                    box-shadow: 0 0 20px {color}40;">
+                        </div>
                     </div>
-                    <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Deadline: {kpi['deadline']}</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                        <span>⏰</span>
+                        <span>Deadline: {kpi['deadline']}</span>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Performance Chart
-        st.markdown("<h3 style='color: white; margin-bottom: 20px;'>📊 Performance Trends</h3>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 30px;">
+                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
+                    📊 Performance Trends
+                </h3>
+            </div>
+        """, unsafe_allow_html=True)
         
         fig_performance = go.Figure()
         
+        # Add traces with improved styling
         fig_performance.add_trace(go.Scatter(
             x=performance_data['Quarter'],
             y=performance_data['KPIs_25'],
             name='25% KPIs',
             mode='lines+markers',
-            line=dict(color='#4ade80', width=3),
-            marker=dict(size=8)
+            line=dict(color='#4ade80', width=4, shape='spline'),
+            marker=dict(size=10, color='#4ade80', line=dict(color='white', width=2)),
+            fill='tonexty',
+            fillcolor='rgba(74, 222, 128, 0.1)'
         ))
         
         fig_performance.add_trace(go.Scatter(
@@ -522,8 +567,10 @@ with tab1:
             y=performance_data['KPIs_40'],
             name='40% KPIs',
             mode='lines+markers',
-            line=dict(color='#3b82f6', width=3),
-            marker=dict(size=8)
+            line=dict(color='#3b82f6', width=4, shape='spline'),
+            marker=dict(size=10, color='#3b82f6', line=dict(color='white', width=2)),
+            fill='tonexty',
+            fillcolor='rgba(59, 130, 246, 0.1)'
         ))
         
         fig_performance.add_trace(go.Scatter(
@@ -531,8 +578,8 @@ with tab1:
             y=performance_data['KPIs_20'],
             name='20% KPIs',
             mode='lines+markers',
-            line=dict(color='#a78bfa', width=3),
-            marker=dict(size=8)
+            line=dict(color='#a78bfa', width=4, shape='spline'),
+            marker=dict(size=10, color='#a78bfa', line=dict(color='white', width=2))
         ))
         
         fig_performance.add_trace(go.Scatter(
@@ -540,35 +587,48 @@ with tab1:
             y=performance_data['KPIs_10'],
             name='10% KPIs',
             mode='lines+markers',
-            line=dict(color='#ec4899', width=3),
-            marker=dict(size=8)
+            line=dict(color='#ec4899', width=4, shape='spline'),
+            marker=dict(size=10, color='#ec4899', line=dict(color='white', width=2))
         ))
         
         fig_performance.update_layout(
-            paper_bgcolor='rgba(30, 41, 59, 0.5)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font={'color': "white", 'family': "Outfit"},
-            height=350,
-            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(15, 23, 42, 0.5)',
+            font={'color': "white", 'family': "Outfit", 'size': 12},
+            height=380,
+            margin=dict(l=40, r=40, t=40, b=40),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
                 y=1.02,
                 xanchor="right",
-                x=1
+                x=1,
+                bgcolor='rgba(30, 41, 59, 0.8)',
+                bordercolor='rgba(148, 163, 184, 0.3)',
+                borderwidth=1,
+                font=dict(size=11)
             ),
             xaxis=dict(
                 showgrid=True,
-                gridcolor='rgba(255, 255, 255, 0.1)',
-                zeroline=False
+                gridcolor='rgba(148, 163, 184, 0.1)',
+                gridwidth=1,
+                zeroline=False,
+                tickfont=dict(size=11)
             ),
             yaxis=dict(
                 showgrid=True,
-                gridcolor='rgba(255, 255, 255, 0.1)',
+                gridcolor='rgba(148, 163, 184, 0.1)',
+                gridwidth=1,
                 zeroline=False,
-                title="Progress %"
+                title="Progress %",
+                titlefont=dict(size=13)
             ),
-            hovermode='x unified'
+            hovermode='x unified',
+            hoverlabel=dict(
+                bgcolor='rgba(30, 41, 59, 0.95)',
+                font_size=12,
+                font_family="Outfit"
+            )
         )
         
         st.plotly_chart(fig_performance, use_container_width=True)
@@ -576,7 +636,14 @@ with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Competencies Radar Chart
-        st.markdown("<h3 style='color: white; margin-bottom: 20px;'>🎯 Competencies</h3>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
+                    🎯 Competencies Assessment
+                </h3>
+            </div>
+        """, unsafe_allow_html=True)
         
         fig_radar = go.Figure()
         
@@ -587,92 +654,173 @@ with tab1:
             r=values,
             theta=categories,
             fill='toself',
-            fillcolor='rgba(59, 130, 246, 0.3)',
-            line=dict(color='#3b82f6', width=3),
-            marker=dict(size=8, color='#4ade80')
+            fillcolor='rgba(102, 126, 234, 0.3)',
+            line=dict(color='#667eea', width=3),
+            marker=dict(size=10, color='#4ade80', line=dict(color='white', width=2)),
+            name='Current Level'
         ))
         
         fig_radar.update_layout(
             polar=dict(
-                bgcolor='rgba(30, 41, 59, 0.5)',
+                bgcolor='rgba(15, 23, 42, 0.5)',
                 radialaxis=dict(
                     visible=True,
                     range=[0, 100],
                     showticklabels=True,
                     ticks='',
-                    gridcolor='rgba(255, 255, 255, 0.2)',
-                    tickfont=dict(color='white')
+                    gridcolor='rgba(148, 163, 184, 0.2)',
+                    tickfont=dict(color='white', size=11),
+                    ticksuffix='%'
                 ),
                 angularaxis=dict(
-                    gridcolor='rgba(255, 255, 255, 0.2)',
-                    tickfont=dict(color='white', size=12)
+                    gridcolor='rgba(148, 163, 184, 0.2)',
+                    tickfont=dict(color='white', size=13, family='Outfit'),
+                    linecolor='rgba(148, 163, 184, 0.3)'
                 )
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             font={'color': "white", 'family': "Outfit"},
-            height=400,
+            height=450,
             margin=dict(l=80, r=80, t=40, b=40),
-            showlegend=False
+            showlegend=False,
+            hoverlabel=dict(
+                bgcolor='rgba(30, 41, 59, 0.95)',
+                font_size=12,
+                font_family="Outfit"
+            )
         )
         
         st.plotly_chart(fig_radar, use_container_width=True)
     
     with col2:
         # Activity Feed
-        st.markdown("<h3 style='color: white; margin-bottom: 20px;'>📣 Activity Feed</h3>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 30px;">
+                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
+                    📣 Recent Activity
+                </h3>
+        """, unsafe_allow_html=True)
         
-        for activity in activity_feed:
+        avatar_colors = ["#667eea", "#764ba2", "#f093fb", "#4facfe"]
+        for idx, activity in enumerate(activity_feed):
             initials = "".join([name[0] for name in activity['name'].split()])
+            color = avatar_colors[idx % len(avatar_colors)]
             st.markdown(f"""
-                <div class="activity-item">
-                    <div class="activity-avatar">{initials}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: white; margin-bottom: 4px;">{activity['name']}</div>
-                        <div style="font-size: 13px; color: #94a3b8;">{activity['action']}</div>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">{activity['time']}</div>
+                <div style="display: flex; align-items: center; gap: 16px; 
+                            padding: 16px; background: rgba(15, 23, 42, 0.5); 
+                            border-radius: 16px; margin-bottom: 12px;
+                            border: 1px solid rgba(148, 163, 184, 0.15);
+                            transition: all 0.3s ease;"
+                     onmouseover="this.style.transform='translateX(8px)'; this.style.borderColor='rgba(102, 126, 234, 0.4)';"
+                     onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='rgba(148, 163, 184, 0.15)';">
+                    <div style="min-width: 50px; height: 50px; border-radius: 50%; 
+                                background: linear-gradient(135deg, {color} 0%, {color}dd 100%);
+                                display: flex; align-items: center; justify-content: center; 
+                                font-weight: 700; font-size: 16px; color: white;
+                                box-shadow: 0 4px 12px {color}40;">
+                        {initials}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; color: white; margin-bottom: 4px; font-size: 15px;">
+                            {activity['name']}
+                        </div>
+                        <div style="font-size: 13px; color: #94a3b8; margin-bottom: 4px;">
+                            {activity['action']}
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 4px;">
+                            <span>🕐</span>
+                            <span>{activity['time']}</span>
+                        </div>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
         
+        st.markdown("</div>", unsafe_allow_html=True)
+        
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Reward Activities Summary
-        st.markdown("<h3 style='color: white; margin-bottom: 20px;'>🎓 Training & Activities</h3>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);
+                        margin-bottom: 30px;">
+                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
+                    🎓 Training & Activities
+                </h3>
+        """, unsafe_allow_html=True)
         
         activities_summary = {
-            "📚 Mandatory Trainings": employee_data['trainings']['mandatory'],
-            "📖 Elective Trainings": employee_data['trainings']['elective'],
-            "🛡️ Safety Trainings": employee_data['trainings']['safety'],
-            "✅ Compliance Modules": employee_data['trainings']['compliance'],
-            "💡 Innovation Ideas": employee_data['activities']['innovation_ideas'],
-            "🎯 Ideas Accepted": employee_data['activities']['ideas_accepted'],
-            "❤️ CSR Activities": employee_data['activities']['csr_activities'],
-            "🧘 Wellness Sessions": employee_data['activities']['wellness_sessions'],
-            "🎪 Corporate Events": employee_data['activities']['corporate_events']
+            "📚 Mandatory Trainings": (employee_data['trainings']['mandatory'], "#3b82f6"),
+            "📖 Elective Trainings": (employee_data['trainings']['elective'], "#8b5cf6"),
+            "🛡️ Safety Trainings": (employee_data['trainings']['safety'], "#ef4444"),
+            "✅ Compliance Modules": (employee_data['trainings']['compliance'], "#10b981"),
+            "💡 Innovation Ideas": (employee_data['activities']['innovation_ideas'], "#f59e0b"),
+            "🎯 Ideas Accepted": (employee_data['activities']['ideas_accepted'], "#06b6d4"),
+            "❤️ CSR Activities": (employee_data['activities']['csr_activities'], "#ec4899"),
+            "🧘 Wellness Sessions": (employee_data['activities']['wellness_sessions'], "#84cc16"),
+            "🎪 Corporate Events": (employee_data['activities']['corporate_events'], "#a78bfa")
         }
         
-        for label, value in activities_summary.items():
+        for label, (value, color) in activities_summary.items():
             st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; align-items: center; 
-                            padding: 12px; background: rgba(255, 255, 255, 0.05); 
-                            border-radius: 10px; margin-bottom: 8px;">
-                    <span style="color: white; font-size: 14px;">{label}</span>
-                    <span style="color: #4ade80; font-weight: 700; font-size: 18px;">{value}</span>
+                            padding: 16px 20px; background: rgba(15, 23, 42, 0.5); 
+                            border-radius: 14px; margin-bottom: 10px;
+                            border: 1px solid rgba(148, 163, 184, 0.15);
+                            transition: all 0.3s ease;"
+                     onmouseover="this.style.borderColor='{color}40'; this.style.transform='scale(1.02)';"
+                     onmouseout="this.style.borderColor='rgba(148, 163, 184, 0.15)'; this.style.transform='scale(1)';">
+                    <span style="color: #e2e8f0; font-size: 14px; font-weight: 500;">{label}</span>
+                    <span style="background: {color}20; color: {color}; font-weight: 700; 
+                                font-size: 20px; padding: 6px 16px; border-radius: 10px;
+                                min-width: 50px; text-align: center; border: 2px solid {color}40;">
+                        {value}
+                    </span>
                 </div>
             """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Certifications
-        st.markdown("<h3 style='color: white; margin-bottom: 20px;'>🏅 Certifications</h3>", unsafe_allow_html=True)
+        st.markdown("""
+            <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); 
+                        border-radius: 20px; padding: 30px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                <h3 style='color: white; margin-bottom: 24px; font-size: 24px; font-weight: 700;'>
+                    🏅 Certifications
+                </h3>
+        """, unsafe_allow_html=True)
         
-        for cert in employee_data['certifications']:
+        cert_colors = ["#667eea", "#f093fb"]
+        for idx, cert in enumerate(employee_data['certifications']):
+            color = cert_colors[idx % len(cert_colors)]
             st.markdown(f"""
-                <div style="padding: 16px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%); 
-                            border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(102, 126, 234, 0.3);">
-                    <div style="font-weight: 600; color: white; font-size: 15px;">🎓 {cert}</div>
+                <div style="padding: 20px; 
+                            background: linear-gradient(135deg, {color}25 0%, {color}15 100%); 
+                            border-radius: 16px; margin-bottom: 16px; 
+                            border: 2px solid {color}40;
+                            box-shadow: 0 4px 12px {color}20;
+                            transition: all 0.3s ease;"
+                     onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px {color}30';"
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px {color}20';">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 32px;">🎓</div>
+                        <div>
+                            <div style="font-weight: 600; color: white; font-size: 16px; margin-bottom: 4px;">
+                                {cert}
+                            </div>
+                            <div style="font-size: 12px; color: {color}; font-weight: 500;">
+                                ✓ Certified
+                            </div>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ==================== TAB 2: ORGANIZATION DASHBOARD (LIGHT THEME) ====================
 with tab2:
