@@ -929,6 +929,28 @@ def render_organization_dashboard():
         </div>
     """, unsafe_allow_html=True)
     
+    # Check if user is admin
+    current_user = next(u for u in st.session_state.users if u["id"] == st.session_state.current_user_id)
+    is_admin = current_user["role"] == "admin"
+    
+    # Tabs
+    if is_admin:
+        tabs = st.tabs(["📈 Analytics", "🏆 Leaderboard", "⚙️ Activity Management"])
+    else:
+        tabs = st.tabs(["📈 Analytics", "🏆 Leaderboard"])
+    
+    with tabs[0]:  # Analytics
+        render_org_analytics()
+    
+    with tabs[1]:  # Leaderboard
+        render_org_leaderboard()
+    
+    if is_admin and len(tabs) > 2:
+        with tabs[2]:  # Activity Management
+            render_activity_management()
+
+def render_org_analytics():
+    """Render organization analytics section"""
     # Key metrics
     total_users = len([u for u in st.session_state.users if u["role"] == "user"])
     total_points_distributed = sum(p["points"] for p in st.session_state.points_ledger if p["status"] == "approved")
@@ -1024,8 +1046,9 @@ def render_organization_dashboard():
                 st.info("Unable to display level distribution chart")
         else:
             st.info("No level data available")
-    
-    # Leaderboard
+
+def render_org_leaderboard():
+    """Render organization leaderboard"""
     st.markdown("### 🏆 Company Leaderboard")
     leaderboard_df = generate_leaderboard()
     
@@ -1036,8 +1059,213 @@ def render_organization_dashboard():
         hide_index=True,
         height=400
     )
+
+def render_activity_management():
+    """Render activity and scoring management for HR"""
+    st.markdown("### ⚙️ Activity & Scoring Management")
+    st.markdown("Manage activity types, point values, and scoring rules")
     
-    # Activity timeline
+    # Initialize custom activities in session state if not exists
+    if 'custom_earn_types' not in st.session_state:
+        st.session_state.custom_earn_types = []
+    
+    if 'custom_scoring_rules' not in st.session_state:
+        st.session_state.custom_scoring_rules = {}
+    
+    # Sub-tabs for different management areas
+    mgmt_tabs = st.tabs(["📋 Current Activities", "➕ Add New Activity", "💰 Scoring Rules"])
+    
+    with mgmt_tabs[0]:  # Current Activities
+        st.markdown("#### 📋 Current Activity Types")
+        
+        # Display all earn types
+        all_earn_types = EARN_TYPES + st.session_state.custom_earn_types
+        
+        if all_earn_types:
+            for i, earn_type in enumerate(all_earn_types):
+                with st.expander(f"{earn_type['name']} - {earn_type['category']}", expanded=False):
+                    col1, col2 = st.columns([3, 1])
+                    
+                    with col1:
+                        st.write(f"**Category:** {earn_type['category']}")
+                        st.write(f"**Points:** {earn_type['points']}")
+                        st.write(f"**Description:** {earn_type['description']}")
+                    
+                    with col2:
+                        if i >= len(EARN_TYPES):  # Custom activity
+                            if st.button("🗑️ Delete", key=f"del_earn_{i}", use_container_width=True):
+                                st.session_state.custom_earn_types.pop(i - len(EARN_TYPES))
+                                st.success("Activity deleted!")
+                                st.rerun()
+        else:
+            st.info("No activities configured yet")
+    
+    with mgmt_tabs[1]:  # Add New Activity
+        st.markdown("#### ➕ Add New Activity Type")
+        
+        with st.form("add_activity_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                activity_name = st.text_input("Activity Name", placeholder="e.g., Team Building Event")
+                
+                category = st.selectbox(
+                    "Category",
+                    ["training", "surveys", "certifications", "innovation", "events", "performance", "attendance", "other"]
+                )
+                
+                points_type = st.selectbox(
+                    "Points Type",
+                    ["Fixed", "Variable", "Range"]
+                )
+                
+                if points_type == "Fixed":
+                    points_value = st.number_input("Points", min_value=1, max_value=5000, value=100)
+                    points_display = str(points_value)
+                elif points_type == "Range":
+                    col_min, col_max = st.columns(2)
+                    with col_min:
+                        points_min = st.number_input("Min Points", min_value=1, max_value=5000, value=50)
+                    with col_max:
+                        points_max = st.number_input("Max Points", min_value=1, max_value=5000, value=200)
+                    points_display = f"{points_min}-{points_max}"
+                    points_value = points_max
+                else:  # Variable
+                    points_display = "Variable"
+                    points_value = 0
+            
+            with col2:
+                description = st.text_area(
+                    "Description",
+                    placeholder="Describe what this activity involves...",
+                    height=100
+                )
+                
+                requires_approval = st.checkbox("Requires Admin Approval", value=True)
+                
+                requires_evidence = st.checkbox("Requires Evidence/Attachment", value=False)
+                
+                is_active = st.checkbox("Active", value=True)
+            
+            submitted = st.form_submit_button("➕ Add Activity", type="primary", use_container_width=True)
+            
+            if submitted:
+                if not activity_name or not description:
+                    st.error("Please fill in all required fields")
+                else:
+                    # Add to custom earn types
+                    new_activity = {
+                        "id": len(EARN_TYPES) + len(st.session_state.custom_earn_types) + 1,
+                        "name": activity_name,
+                        "category": category,
+                        "points": points_display,
+                        "description": description,
+                        "requires_approval": requires_approval,
+                        "requires_evidence": requires_evidence,
+                        "is_active": is_active,
+                        "points_value": points_value
+                    }
+                    
+                    st.session_state.custom_earn_types.append(new_activity)
+                    
+                    # Add to custom scoring rules
+                    scoring_key = f"custom_{activity_name.lower().replace(' ', '_')}"
+                    st.session_state.custom_scoring_rules[scoring_key] = points_value
+                    
+                    # Add audit log
+                    add_audit_log(
+                        st.session_state.current_user_id,
+                        "added_activity_type",
+                        f"Added new activity type: {activity_name} ({points_display} points)"
+                    )
+                    
+                    st.success(f"✅ Activity '{activity_name}' added successfully!")
+                    st.balloons()
+                    st.rerun()
+    
+    with mgmt_tabs[2]:  # Scoring Rules
+        st.markdown("#### 💰 Scoring Rules Configuration")
+        st.markdown("Modify point values for different activity types")
+        
+        # Organize scoring rules by category
+        categories_scoring = {
+            "Surveys": ["survey_per_question", "survey_short", "survey_medium", "survey_long"],
+            "Training": ["training_per_hour", "training_full_day", "training_half_day", "training_mandatory", "training_elective"],
+            "Certifications": ["certification_basic", "certification_advanced", "certification_professional"],
+            "Initiatives": ["initiative_qudwa", "initiative_digital_champion", "initiative_alkhorayef_champion", 
+                            "initiative_thank_you_card", "initiative_idea_submission", "initiative_idea_accepted"],
+            "Events": ["event_corporate", "event_csr", "event_wellness"],
+            "Performance": ["kpi_target_achieved", "kpi_exceed_target", "extra_milestone"],
+            "Attendance": ["perfect_attendance_month", "perfect_attendance_quarter"]
+        }
+        
+        st.info("💡 Changes to scoring rules will apply to all future point calculations. Existing awarded points are not affected.")
+        
+        for cat_name, rules in categories_scoring.items():
+            with st.expander(f"📌 {cat_name}", expanded=False):
+                for rule in rules:
+                    if rule in SCORING_RULES:
+                        col1, col2, col3 = st.columns([3, 2, 1])
+                        
+                        with col1:
+                            st.write(f"**{rule.replace('_', ' ').title()}**")
+                        
+                        with col2:
+                            # Get current value
+                            current_value = st.session_state.custom_scoring_rules.get(rule, SCORING_RULES[rule])
+                            
+                            new_value = st.number_input(
+                                "Points",
+                                min_value=1,
+                                max_value=5000,
+                                value=int(current_value),
+                                key=f"score_{rule}",
+                                label_visibility="collapsed"
+                            )
+                        
+                        with col3:
+                            if st.button("Update", key=f"update_{rule}", use_container_width=True):
+                                st.session_state.custom_scoring_rules[rule] = new_value
+                                
+                                # Add audit log
+                                add_audit_log(
+                                    st.session_state.current_user_id,
+                                    "updated_scoring_rule",
+                                    f"Updated {rule}: {SCORING_RULES[rule]} → {new_value} points"
+                                )
+                                
+                                st.success(f"✅ Updated {rule} to {new_value} points")
+                                st.rerun()
+        
+        # Custom activities scoring
+        if st.session_state.custom_scoring_rules:
+            st.markdown("---")
+            st.markdown("#### Custom Activity Scoring")
+            
+            for key, value in st.session_state.custom_scoring_rules.items():
+                if key.startswith("custom_"):
+                    col1, col2, col3 = st.columns([3, 2, 1])
+                    
+                    with col1:
+                        st.write(f"**{key.replace('custom_', '').replace('_', ' ').title()}**")
+                    
+                    with col2:
+                        new_value = st.number_input(
+                            "Points",
+                            min_value=1,
+                            max_value=5000,
+                            value=int(value),
+                            key=f"custom_score_{key}",
+                            label_visibility="collapsed"
+                        )
+                    
+                    with col3:
+                        if st.button("Update", key=f"update_custom_{key}", use_container_width=True):
+                            st.session_state.custom_scoring_rules[key] = new_value
+                            st.success(f"✅ Updated to {new_value} points")
+                            st.rerun()
+
+# Keep the rest of organization dashboard
     st.markdown("### 📈 Recent Activity")
     recent_points = sorted(st.session_state.points_ledger, key=lambda x: x["date"], reverse=True)[:20]
     
